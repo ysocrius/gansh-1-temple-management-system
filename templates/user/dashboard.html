@@ -1,0 +1,453 @@
+{% extends "user/base.html" %}
+
+{% block title %}Dashboard - Temple Management System{% endblock %}
+
+{% block navbar %}
+<!-- Navbar is hidden on dashboard page -->
+{% endblock %}
+
+{% block styles %}
+<style type="text/css">
+    body {
+        padding-top: 0; /* Remove padding that may have been added for navbar */
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem 2rem;
+        background-color: #f8f9fa;
+    }
+    
+    .dashboard-nav-buttons {
+        display: flex;
+        align-items: center;
+    }
+
+    .dashboard-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .welcome-section {
+        background: linear-gradient(135deg, #ff9966, #ff5e62);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff5e62;
+        margin: 0.5rem 0;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .content-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.03);
+    }
+    
+    .content-card:hover {
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .content-card h3 {
+        color: #333;
+        margin-bottom: 1.2rem;
+        position: relative;
+        padding-bottom: 0.75rem;
+        font-weight: 600;
+        border-bottom: 2px solid rgba(255, 153, 102, 0.3);
+    }
+    
+    .content-card h3::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 60px;
+        height: 2px;
+        background: linear-gradient(to right, #ff9966, #ff5e62);
+    }
+
+    .activity-item {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-item:hover {
+        background-color: rgba(255, 153, 102, 0.05);
+        transform: translateX(3px);
+    }
+
+    .activity-date {
+        font-size: 0.8rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .activity-date i {
+        margin-right: 0.4rem;
+        color: #ff9966;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #333;
+        margin: 0.25rem 0;
+        font-size: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .activity-details {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.2rem;
+    }
+
+    .activity-status {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+        align-self: flex-start;
+    }
+
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid rgba(21, 87, 36, 0.2);
+    }
+
+    .status-confirmed {
+        background: #cce5ff;
+        color: #004085;
+        border: 1px solid rgba(0, 64, 133, 0.2);
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid rgba(133, 100, 4, 0.2);
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid rgba(114, 28, 36, 0.2);
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .action-button {
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        background: #ff9966;
+        color: white;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .action-button:hover {
+        background: #ff5e62;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .welcome-section {
+            padding: 1.5rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+        }
+    }
+
+    /* Seva Grid Styles */
+    .seva-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 1rem;
+    }
+    
+    .seva-card {
+        flex: 1 1 calc(33.333% - 15px);
+        min-width: 200px;
+        max-width: calc(33.333% - 15px);
+        background: #fff;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(255, 153, 102, 0.1);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .seva-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        border-color: rgba(255, 153, 102, 0.3);
+    }
+    
+    .seva-date {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .seva-date i {
+        margin-right: 5px;
+        color: #ff9966;
+    }
+    
+    .seva-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #333;
+        margin-bottom: 8px;
+    }
+    
+    .seva-type {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .seva-type i {
+        margin-right: 5px;
+        color: #ff9966;
+    }
+    
+    .seva-status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        align-self: flex-start;
+    }
+    
+    /* Responsive adjustments for seva grid */
+    @media (max-width: 768px) {
+        .seva-grid {
+            flex-direction: column;
+        }
+        
+        .seva-card {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-nav-buttons">
+        <a href="{{ url_for('general.home') }}" class="btn btn-primary me-2">
+            <i class="fas fa-home me-1"></i> Go to Home
+        </a>
+        <a href="{{ url_for('user.logout') }}" class="btn btn-outline-danger">
+            <i class="fas fa-sign-out-alt me-1"></i> Logout
+        </a>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <div class="welcome-section">
+        <h1>Welcome, {{ user.name }}!</h1>
+        <p>Here's an overview of your temple activities</p>
+        <div class="quick-actions">
+            <a href="{{ url_for('general.get_general_sevas') }}" class="action-button">Book Seva</a>
+            <a href="{{ url_for('general.general_donations') }}" class="action-button">Make Donation</a>
+            <a href="{{ url_for('user.profile') }}" class="action-button">View Profile</a>
+            <a href="{{ url_for('testimonials.submit') }}" class="action-button">Submit Testimonial</a>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ statistics.total_sevas if statistics else 0 }}</div>
+            <div class="stat-label">Total Sevas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ statistics.total_donations if statistics else 0 }}</div>
+            <div class="stat-label">Total Donations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">₹{{ "{:,.2f}".format(statistics.total_amount) if statistics and statistics.total_amount else "0.00" }}</div>
+            <div class="stat-label">Total Amount Donated</div>
+        </div>
+    </div>
+
+    {% if upcoming_sevas %}
+    <div class="content-card">
+        <h3>Upcoming Sevas</h3>
+        <div class="seva-grid">
+            {% for seva in upcoming_sevas %}
+            <div class="seva-card">
+                <div class="seva-date">
+                    <i class="fas fa-calendar-alt"></i>
+                    {% if seva.seva_date is defined and seva.seva_date is not string %}
+                        {{ seva.seva_date.strftime('%B %d, %Y') }}
+                    {% else %}
+                        {{ seva.seva_date_str if seva.seva_date_str is defined else seva.seva_date }}
+                    {% endif %}
+                </div>
+                <div class="seva-name">{{ seva.seva_name }}</div>
+                <div class="seva-type">
+                    <i class="fas fa-om"></i> {{ seva.seva_type if seva.seva_type is defined else "Temple Seva" }}
+                </div>
+                <div class="seva-status status-{% if seva.status == 'pending' %}pending{% elif seva.status == 'cancelled' %}cancelled{% else %}confirmed{% endif %}">
+                    <i class="fas fa-{% if seva.status == 'pending' %}clock{% elif seva.status == 'cancelled' %}times-circle{% else %}check-circle{% endif %}"></i> {{ seva.status }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="margin-top: 1.5rem; text-align: center;">
+            <a href="{{ url_for('user.history') }}" class="action-button">
+                <i class="fas fa-list"></i> View All Sevas
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="content-grid">
+        <div class="content-card">
+            <h3>Recent Donations</h3>
+            {% if recent_donations %}
+                {% for donation in recent_donations[:3] %}
+                <div class="activity-item">
+                    <div class="activity-date">
+                        <i class="fas fa-calendar-check"></i>
+                        {% if donation.donation_date is defined and donation.donation_date is not string %}
+                            {{ donation.donation_date.strftime('%B %d, %Y') }}
+                        {% else %}
+                            {{ donation.donation_date_str if donation.donation_date_str is defined else donation.donation_date }}
+                        {% endif %}
+                    </div>
+                    <div class="activity-title">
+                        <span>₹{{ "{:,.2f}".format(donation.amount) }}</span>
+                    </div>
+                    <div class="activity-details">
+                        <i class="fas fa-hand-holding-heart"></i> {{ donation.purpose }}
+                    </div>
+                    <div class="activity-status status-completed">
+                        <i class="fas fa-check-circle"></i> {{ donation.status }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No recent donations</p>
+            {% endif %}
+            <div style="margin-top: 1rem; text-align: center;">
+                <a href="{{ url_for('user.history') }}" class="action-button">
+                    <i class="fas fa-list"></i> View All Donations
+                </a>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h3>Upcoming Events</h3>
+            {% if upcoming_events %}
+                {% for event in upcoming_events %}
+                <div class="activity-item">
+                    <div class="activity-date">
+                        <i class="fas fa-calendar-day"></i>
+                        {{ event.date.strftime('%B %d, %Y') }}
+                    </div>
+                    <div class="activity-title">
+                        {{ event.title }}
+                    </div>
+                    <div class="activity-details">
+                        <i class="fas fa-map-marker-alt"></i> {{ event.venue if event.venue else "Temple Premises" }}
+                    </div>
+                    <div class="activity-details">
+                        {{ event.description[:80] }}{% if event.description|length > 80 %}...{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No upcoming events</p>
+            {% endif %}
+            <div style="margin-top: 1rem; text-align: center;">
+                <a href="{{ url_for('general.events') }}" class="action-button">
+                    <i class="fas fa-list"></i> View All Events
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

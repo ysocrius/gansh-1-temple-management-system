@@ -1,0 +1,33 @@
+{% extends "user/base.html" %}
+
+{% block title %} Seva Booking {% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Seva Booking</h2>
+
+    <!-- Display Seva Details -->
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">{{ seva.seva_name }}</h4>
+            <p><strong>Type:</strong> {{ seva.seva_type }}</p>
+            <p><strong>Price:</strong> ₹{{ seva.seva_price }}</p>
+            <p><strong>Description:</strong> {{ seva.seva_description }}</p>
+        </div>
+    </div>
+
+    <br>
+
+    <!-- Seva Date Selection -->
+    <form action="{{ url_for('seva.confirm_order', seva_id=seva._id) }}" method="GET">
+        <label for="seva_date"><strong>Select Seva Date:</strong></label>
+        <input type="date" id="seva_date" name="seva_date" class="form-control" required>
+
+        <br>
+        <button type="submit" class="btn btn-primary">Proceed to Confirm</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('seva.seva_list_view') }}" class="btn btn-secondary">Cancel</a>
+</div>
+{% endblock %}

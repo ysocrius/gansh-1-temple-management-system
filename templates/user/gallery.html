@@ -1,0 +1,487 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Title -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="mb-3">Temple Gallery</h2>
+            <p class="text-muted">Explore the divine moments and sacred spaces of our temple</p>
+        </div>
+    </div>
+
+    <!-- Search and Filter Controls -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="input-group">
+                <input type="text" class="form-control" id="searchGallery" placeholder="Search images...">
+                <select class="form-select" id="categoryFilter" style="max-width: 200px;">
+                    <option value="all">All Categories</option>
+                    <option value="temple">Temple Views</option>
+                    <option value="events">Events & Celebrations</option>
+                    <option value="additional">Additional Views</option>
+                </select>
+                <button class="btn btn-primary" type="button" id="searchBtn">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Images Carousel -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img src="{{ url_for('static', filename='images/s1.jpg') }}" 
+                             class="d-block w-100" alt="Temple Slideshow 1"
+                             style="height: 400px; object-fit: cover;">
+                        <div class="carousel-caption">
+                            <h5>Temple Overview</h5>
+                            <p>A majestic view of our sacred temple</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <img src="{{ url_for('static', filename='images/s2.jpg') }}" 
+                             class="d-block w-100" alt="Temple Slideshow 2"
+                             style="height: 400px; object-fit: cover;">
+                        <div class="carousel-caption">
+                            <h5>Divine Celebrations</h5>
+                            <p>Special moments from temple ceremonies</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <img src="{{ url_for('static', filename='images/s3.jpg') }}" 
+                             class="d-block w-100" alt="Temple Slideshow 3"
+                             style="height: 400px; object-fit: cover;">
+                        <div class="carousel-caption">
+                            <h5>Sacred Spaces</h5>
+                            <p>Experience the spiritual ambiance</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Grid -->
+    <div class="row" id="imageGrid">
+        <!-- Temple Views -->
+        <div class="col-12 mb-4 gallery-category" data-category="temple">
+            <h3 class="mb-3">Temple Views</h3>
+            <div class="row g-3">
+                <div class="col-md-4 gallery-item">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/gallery1.jpg') }}" 
+                             class="card-img-top lazy" 
+                             alt="Temple Gallery 1"
+                             data-bs-toggle="modal"
+                             data-bs-target="#imageModal"
+                             loading="lazy">
+                        <div class="card-body">
+                            <h5 class="card-title">Main Temple View</h5>
+                            <p class="card-text">The magnificent entrance of our temple.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 gallery-item">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/gallery2.jpg') }}" 
+                             class="card-img-top lazy" 
+                             alt="Temple Gallery 2"
+                             data-bs-toggle="modal"
+                             data-bs-target="#imageModal"
+                             loading="lazy">
+                        <div class="card-body">
+                            <h5 class="card-title">Inner Sanctum</h5>
+                            <p class="card-text">The sacred inner sanctum of the temple.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 gallery-item">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/gallery3.jpg') }}" 
+                             class="card-img-top lazy" 
+                             alt="Temple Gallery 3"
+                             data-bs-toggle="modal"
+                             data-bs-target="#imageModal"
+                             loading="lazy">
+                        <div class="card-body">
+                            <h5 class="card-title">Temple Architecture</h5>
+                            <p class="card-text">Beautiful architectural details of our temple.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events & Celebrations -->
+        <div class="col-12 mb-4 gallery-category" data-category="events">
+            <h3 class="mb-3">Events & Celebrations</h3>
+            <div class="row g-3">
+                <div class="col-md-6 gallery-item">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/event1.jpg') }}" 
+                             class="card-img-top lazy" 
+                             alt="Temple Event 1"
+                             data-bs-toggle="modal"
+                             data-bs-target="#imageModal"
+                             loading="lazy">
+                        <div class="card-body">
+                            <h5 class="card-title">Festival Celebration</h5>
+                            <p class="card-text">Annual temple festival celebrations and rituals.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 gallery-item">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/event2.jpg') }}" 
+                             class="card-img-top lazy" 
+                             alt="Temple Event 2"
+                             data-bs-toggle="modal"
+                             data-bs-target="#imageModal"
+                             loading="lazy">
+                        <div class="card-body">
+                            <h5 class="card-title">Special Ceremonies</h5>
+                            <p class="card-text">Special pujas and ceremonies at our temple.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Views -->
+        <div class="col-12 mb-4 gallery-category" data-category="additional">
+            <h3 class="mb-3">Additional Views</h3>
+            <div class="row g-3">
+                <div class="col-md-6 gallery-item">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/s4.jpg') }}" 
+                             class="card-img-top lazy" 
+                             alt="Additional View 1"
+                             data-bs-toggle="modal"
+                             data-bs-target="#imageModal"
+                             loading="lazy">
+                        <div class="card-body">
+                            <h5 class="card-title">Temple Surroundings</h5>
+                            <p class="card-text">The peaceful surroundings of our temple.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 gallery-item">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='images/s5.jpg') }}" 
+                             class="card-img-top lazy" 
+                             alt="Additional View 2"
+                             data-bs-toggle="modal"
+                             data-bs-target="#imageModal"
+                             loading="lazy">
+                        <div class="card-body">
+                            <h5 class="card-title">Temple at Dawn</h5>
+                            <p class="card-text">The serene view of our temple at dawn.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Image Title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="" class="img-fluid" id="modalImage" alt="Modal Image">
+                    <p class="mt-3" id="modalDescription">Image description goes here.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" class="btn btn-primary" id="downloadBtn" download>Download</a>
+                    <button type="button" class="btn btn-success" id="shareBtn">Share</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+.gallery-item {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.gallery-item:hover {
+    transform: scale(1.02);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.carousel-item img {
+    border-radius: 10px;
+}
+
+.carousel-caption {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+/* Loading animation for lazy loaded images */
+.lazy {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.lazy.loaded {
+    opacity: 1;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+.loading-spinner::after {
+    content: '';
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Focus styles for accessibility */
+.gallery-item:focus-within {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+}
+
+.modal-content:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
+}
+
+/* Loading skeleton animation */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search and filter functionality
+    const searchInput = document.getElementById('searchGallery');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const searchBtn = document.getElementById('searchBtn');
+    const galleryItems = document.querySelectorAll('.gallery-item');
+
+    function filterGallery() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value;
+
+        document.querySelectorAll('.gallery-category').forEach(category => {
+            const categoryType = category.dataset.category;
+            const shouldShowCategory = selectedCategory === 'all' || categoryType === selectedCategory;
+            
+            if (shouldShowCategory) {
+                category.style.display = '';
+                category.querySelectorAll('.gallery-item').forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    const matchesSearch = text.includes(searchTerm);
+                    item.style.display = matchesSearch ? '' : 'none';
+                });
+            } else {
+                category.style.display = 'none';
+            }
+        });
+    }
+
+    searchBtn.addEventListener('click', filterGallery);
+    searchInput.addEventListener('keyup', filterGallery);
+    categoryFilter.addEventListener('change', filterGallery);
+
+    // Modal functionality
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.querySelector('.modal-title');
+    const modalDescription = document.getElementById('modalDescription');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    galleryItems.forEach(item => {
+        const img = item.querySelector('img');
+        const title = item.querySelector('.card-title').textContent;
+        const description = item.querySelector('.card-text').textContent;
+
+        item.addEventListener('click', () => {
+            modalImage.src = img.src;
+            modalTitle.textContent = title;
+            modalDescription.textContent = description;
+            downloadBtn.href = img.src;
+        });
+    });
+
+    // Share functionality
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+        try {
+            await navigator.share({
+                title: modalTitle.textContent,
+                text: modalDescription.textContent,
+                url: modalImage.src
+            });
+        } catch (err) {
+            console.log('Share failed:', err);
+        }
+    });
+
+    // Loading spinner
+    const spinner = document.createElement('div');
+    spinner.className = 'loading-spinner';
+    document.body.appendChild(spinner);
+
+    // Show loading spinner when images are loading
+    function showSpinner() {
+        spinner.style.display = 'block';
+    }
+
+    function hideSpinner() {
+        spinner.style.display = 'none';
+    }
+
+    // Enhanced lazy loading with loading indicator
+    const lazyImages = document.querySelectorAll('img.lazy');
+    let loadedImages = 0;
+
+    showSpinner();
+
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.onload = () => {
+                    img.classList.add('loaded');
+                    loadedImages++;
+                    if (loadedImages === lazyImages.length) {
+                        hideSpinner();
+                    }
+                };
+                observer.unobserve(img);
+            }
+        });
+    });
+
+    lazyImages.forEach(img => {
+        // Add skeleton loading effect
+        img.style.background = '#f0f0f0';
+        img.classList.add('skeleton');
+        imageObserver.observe(img);
+    });
+
+    // Keyboard navigation for modal
+    const modal = document.getElementById('imageModal');
+    const closeBtn = modal.querySelector('.btn-close');
+    const shareBtn = document.getElementById('shareBtn');
+
+    modal.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            bootstrap.Modal.getInstance(modal).hide();
+        }
+
+        if (e.key === 'Tab') {
+            const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+    });
+
+    // Focus management for modal
+    modal.addEventListener('shown.bs.modal', function() {
+        closeBtn.focus();
+    });
+
+    // Enhanced gallery item click handling
+    galleryItems.forEach(item => {
+        const img = item.querySelector('img');
+        const title = item.querySelector('.card-title').textContent;
+        const description = item.querySelector('.card-text').textContent;
+
+        // Make items focusable
+        item.setAttribute('tabindex', '0');
+        
+        // Handle both click and keyboard enter
+        function handleSelection() {
+            document.getElementById('modalImage').src = img.src;
+            modalTitle.textContent = title;
+            modalDescription.textContent = description;
+            document.getElementById('downloadBtn').href = img.src;
+            
+            // Set ARIA labels
+            document.getElementById('modalImage').setAttribute('aria-label', title);
+            modalDescription.setAttribute('aria-label', description);
+        }
+
+        item.addEventListener('click', handleSelection);
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleSelection();
+                bootstrap.Modal.getInstance(modal).show();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

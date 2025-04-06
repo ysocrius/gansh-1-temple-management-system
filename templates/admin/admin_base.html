@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %}</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { width: 80%; margin: auto; padding: 20px; }
+        .card { border: 1px solid #ccc; padding: 10px; margin: 10px; border-radius: 5px; background: #f9f9f9; }
+        nav { background: #007bff; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: white; text-decoration: none; margin: 0 15px; font-size: 18px; }
+        .button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        .blue { background-color: #007bff; }
+        .red { background-color: #ff4d4d; }
+        .purple { background-color: #6a0dad; }
+        .button:hover { opacity: 0.8; }
+
+        
+    .seva-form {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        margin: auto;
+        font-family: Arial, sans-serif;
+    }
+
+    .seva-form h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .seva-form label {
+        font-weight: bold;
+        display: block;
+        margin: 8px 0 5px;
+    }
+
+    .seva-form input,
+    .seva-form textarea {
+        width: 80%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .seva-form textarea {
+        height: 80px;
+        resize: none;
+    }
+
+    .seva-form button {
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: 0.3s ease;
+    }
+
+    .seva-form button:hover {
+        background-color: #0056b3;
+    }
+
+    .seva-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    background: #f8f9fa; /* Light background */
+    border-radius: 10px;
+}
+
+/* Seva Card Design */
+.seva-list .card {
+    background: #fff;
+    padding: 20px;
+    width: 300px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.seva-list .card:hover {
+    transform: scale(1.05);
+}
+
+/* Seva Card Text */
+.seva-list .card h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.seva-list .card p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+/* Delete Button */
+.seva-list .card form button {
+    background-color: #dc3545; /* Bootstrap red */
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+}
+
+.seva-list .card form button:hover {
+    background-color: #c82333;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .seva-list {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+.event-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    background: #f8f9fa; /* Light gray background */
+    border-radius: 10px;
+}
+
+/* Event Card Design */
+.event-list .card {
+    background: #fff;
+    padding: 20px;
+    width: 320px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.event-list .card:hover {
+    transform: scale(1.05);
+}
+
+/* Event Card Text */
+.event-list .card h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.event-list .card p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+/* Delete Button */
+.event-list .card form button {
+    background-color: #dc3545; /* Bootstrap red */
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+}
+
+.event-list .card form button:hover {
+    background-color: #c82333;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .event-list {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* Donation Form Styling */
+.donation-form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: auto;
+    font-family: Arial, sans-serif;
+}
+
+.donation-form h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.donation-form label {
+    font-weight: bold;
+    display: block;
+    margin: 8px 0 5px;
+}
+
+.donation-form input,
+.donation-form textarea {
+    width: 80%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.donation-form textarea {
+    height: 80px;
+    resize: none;
+}
+
+.donation-form button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s ease;
+}
+
+.donation-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Donation List Styling */
+.donation-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+/* Donation Card */
+.donation-list .card {
+    background: #fff;
+    padding: 20px;
+    width: 320px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.donation-list .card:hover {
+    transform: scale(1.05);
+}
+
+.donation-list .card h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.donation-list .card p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+/* Delete Button */
+.donation-list .card form button {
+    background-color: #dc3545;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+}
+
+.donation-list .card form button:hover {
+    background-color: #c82333;
+}
+
+/* Flash Messages */
+.flash-message {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.flash-message.success {
+    background-color: #28a745;
+    color: white;
+}
+
+.flash-message.error {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .donation-list {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+    </style>
+    
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="-1">  
+        <script>
+            function clearSession() {
+                // Clear client-side storage
+                sessionStorage.clear(); 
+                localStorage.clear();  
+                
+                // Prevent back button
+                history.pushState(null, null, location.href);
+                window.onpopstate = function () {
+                    history.go(1);
+                };
+                
+                // Allow the server-side logout to complete
+                return true;
+            }
+        </script>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-links">
+            <a href="{{ url_for('general_admin.admin_dashboard') }}" class="button ">Admin Dashboard</a>
+            <a href="{{ url_for('general_admin.manage_sevas') }}" class="button ">Manage Sevas</a>
+            <a href="{{ url_for('general_admin.manage_events') }}" class="button ">Manage Events</a>  
+            <a href="{{ url_for('general_admin.manage_donations') }}" class="button ">Manage Donations</a>  
+            <a href="{{ url_for('general_admin.manage_users') }}" class="button ">Manage Users</a>
+            <a href="{{ url_for('general_admin.manage_testimonials') }}" class="button ">Manage Testimonials</a>
+        </div>
+        <a href="{{ url_for('admin.logout') }}" onclick="clearSession()">Logout</a>
+
+
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>

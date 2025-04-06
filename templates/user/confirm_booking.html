@@ -1,0 +1,129 @@
+{% extends "user/base.html" %}
+
+{% block title %} Confirm Seva Booking {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Confirm Seva Booking</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Seva Details -->
+                    <div class="mb-4">
+                        <h5 class="card-title">Seva Details</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="30%">Seva Name</th>
+                                    <td>{{ seva.seva_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type</th>
+                                    <td>{{ seva.seva_type }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Price</th>
+                                    <td>₹{{ seva.seva_price }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Description</th>
+                                    <td>{{ seva.description if seva.description else 'No description available' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Booking Form -->
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- User Details -->
+                        <div class="mb-4">
+                            <h5 class="card-title">Your Details</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tr>
+                                        <th width="30%">Name</th>
+                                        <td>{{ user.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Email</th>
+                                        <td>{{ user.email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Phone</th>
+                                        <td>{{ user.phone if user.phone else 'Not provided' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Date Selection -->
+                        <div class="mb-4">
+                            <h5 class="card-title">Select Date</h5>
+                            <div class="form-group">
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="seva_date" 
+                                       name="seva_date" 
+                                       required
+                                       min="{{ today }}"
+                                       value="{{ request.form.get('seva_date', '') }}">
+                                <div class="invalid-feedback">
+                                    Please select a date for the seva.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the terms and conditions
+                                </label>
+                                <div class="invalid-feedback">
+                                    You must agree to the terms and conditions.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('seva.seva_list_view') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Sevas
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Confirm Booking <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Add CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch all forms that need validation
+    var forms = document.querySelectorAll('.needs-validation');
+
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+});
+</script>
+{% endblock %}

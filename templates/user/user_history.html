@@ -1,0 +1,1841 @@
+{% extends "user/base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+<style>
+    .filter-card {
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .filter-section {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .filter-section:last-child {
+        border-bottom: none;
+    }
+    
+    .filter-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: var(--text-dark);
+    }
+    
+    .activity-header {
+        background: linear-gradient(135deg, var(--orange-gradient-start), var(--orange-gradient-end));
+        padding: 20px 0;
+        color: white;
+        margin-bottom: 20px;
+        border-radius: 10px;
+    }
+    
+    .activity-title {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .activity-subtitle {
+        opacity: 0.8;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: var(--text-medium);
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 0;
+        position: relative;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: var(--primary-orange);
+        background-color: transparent;
+        font-weight: 600;
+    }
+    
+    .nav-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: var(--primary-orange);
+    }
+    
+    .history-card {
+        margin-bottom: 15px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .history-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .history-card .card-header {
+        padding: 8px 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .history-card .card-body {
+        padding: 15px 10px;
+    }
+    
+    .history-card .seva-type,
+    .history-card .donation-purpose {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        background-color: rgba(var(--primary-orange-rgb), 0.1);
+        color: var(--primary-orange);
+        margin-bottom: 6px;
+    }
+    
+    .seva-date, .donation-date {
+        color: var(--text-medium);
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    
+    .history-empty {
+        padding: 60px 0;
+        text-align: center;
+    }
+    
+    .history-empty i {
+        font-size: 3rem;
+        color: var(--text-light);
+        margin-bottom: 20px;
+    }
+    
+    .history-empty h4 {
+        color: var(--text-dark);
+        margin-bottom: 10px;
+    }
+    
+    .history-empty p {
+        color: var(--text-medium);
+        max-width: 500px;
+        margin: 0 auto 20px;
+    }
+    
+    .badge-pill {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    
+    .badge-primary {
+        background-color: var(--primary-orange);
+    }
+    
+    .badge-success {
+        background-color: #28a745;
+    }
+    
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-cancelled, .badge-cancelled {
+        background-color: #6c757d;
+        color: #fff;
+    }
+    
+    .timeline {
+        position: relative;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .timeline-container {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -10px;
+    }
+    
+    .timeline-pagination-container {
+        margin-top: 15px;
+    }
+    
+    .paginated-timeline-item {
+        display: none;
+    }
+    
+    .paginated-timeline-item.visible {
+        display: block;
+    }
+    
+    .timeline-item {
+        padding: 8px 20px 8px 60px;
+        position: relative;
+        width: 100%;
+        left: 0;
+    }
+    
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-color: white;
+        border: 4px solid var(--primary-orange);
+        border-radius: 50%;
+        top: 15px;
+        right: auto;
+        left: 20px;
+        z-index: 1;
+    }
+    
+    .timeline-item:nth-child(even) {
+        left: 50%;
+    }
+    
+    .timeline-item:nth-child(even)::after {
+        left: -10px;
+    }
+    
+    .timeline-content {
+        padding: 10px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+    }
+    
+    .timeline-date {
+        font-size: 0.85rem;
+        color: var(--text-medium);
+        margin-bottom: 5px;
+    }
+    
+    .timeline-title {
+        font-size: 1rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .timeline::after {
+            left: 31px;
+        }
+        
+        .timeline-item {
+            width: 100%;
+            padding-left: 70px;
+            padding-right: 20px;
+        }
+        
+        .timeline-item::after {
+            left: 21px;
+        }
+        
+        .timeline-item:nth-child(even) {
+            left: 0;
+        }
+        
+        .timeline-item:nth-child(even)::after {
+            left: 21px;
+        }
+    }
+    
+    /* Better responsive buttons for smaller cards */
+    .history-card .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px; 
+    }
+    
+    .history-card .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.4rem;
+    }
+    
+    /* Improved layout for buttons in pending cards */
+    .history-card .btn-group {
+        flex-direction: row;
+        flex-wrap: wrap;
+        row-gap: 5px;
+        column-gap: 3px;
+        margin-top: 5px;
+    }
+    
+    /* More responsive buttons for small screens */
+    @media (max-width: 576px) {
+        .history-card .btn-group {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .history-card .btn-sm {
+            flex: 1;
+            font-size: 0.65rem;
+            padding: 0.2rem 0.3rem;
+        }
+    }
+    
+    /* Use icon-only buttons for very small cards to reduce congestion */
+    @media (max-width: 400px) {
+        .history-card .btn-sm .btn-text {
+            display: none;
+        }
+        
+        .history-card .btn-sm {
+            padding: 0.2rem 0.25rem;
+            text-align: center;
+        }
+        
+        .history-card .btn-sm i {
+            margin-right: 0;
+        }
+    }
+    
+    /* Improved button styling and hierarchy */
+    .history-card .btn-outline-primary {
+        border-color: #ddd;
+    }
+    
+    .history-card .btn-outline-success {
+        border-color: #ddd;
+    }
+    
+    /* Better vertical spacing in cards */
+    .history-card .card-body {
+        padding-bottom: 10px;
+    }
+    
+    .history-card .seva-type,
+    .history-card .donation-purpose {
+        margin-bottom: 6px;
+    }
+    
+    .history-card .card-title {
+        margin-bottom: 6px;
+        line-height: 1.3;
+    }
+    
+    .history-card .seva-date,
+    .history-card .donation-date {
+        margin-bottom: 10px;
+    }
+    
+    /* Stack buttons vertically on very small cards */
+    @media (max-width: 350px) {
+        .history-card .btn-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .history-card .btn-sm {
+            margin-bottom: 3px;
+        }
+    }
+    
+    /* Modify pending cards layout to prevent price overlap */
+    .history-card .card-body .d-flex {
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    /* Make price display on its own line for pending items */
+    .history-card .card-body .d-flex .fs-5.fw-bold {
+        margin-bottom: 8px;
+        width: 100%;
+    }
+    
+    /* Make buttons container take full width in pending cards */
+    .history-card .btn-group {
+        width: 100%;
+        margin-top: 5px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+    }
+    
+    /* Primary buttons (first row) */
+    .history-card .btn-warning,
+    .history-card .cancel-btn {
+        grid-column: span 1;
+    }
+    
+    /* Secondary buttons (second row) */
+    .history-card .btn-outline-primary,
+    .history-card .btn-outline-success {
+        grid-column: span 1;
+    }
+    
+    /* Adjust button sizes */
+    .history-card .btn-sm {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.3rem;
+    }
+    
+    /* Responsive text adjustment for smaller cards */
+    @media (max-width: 992px) {
+        .history-card .card-title {
+            font-size: 1rem;
+        }
+        
+        .history-card .seva-type,
+        .history-card .donation-purpose {
+            font-size: 0.7rem;
+        }
+    }
+    
+    /* Improve responsive layout for small screens */
+    @media (min-width: 768px) {
+        .card-body {
+            padding: 15px 10px;
+        }
+        
+        /* Create a two-column timeline for medium screens and up */
+        .timeline-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+        
+        .timeline-column {
+            width: 50%;
+            padding: 0 10px;
+        }
+    }
+    
+    @media (min-width: 992px) {
+        /* Create a three-column timeline for large screens */
+        .timeline-column {
+            width: 33.333%;
+        }
+    }
+    
+    /* Make activity cards more compact */
+    .card-header h4.mb-0 {
+        margin-bottom: 0;
+        font-size: 1.4rem;
+    }
+    
+    .tab-content {
+        padding-top: 10px;
+    }
+    
+    /* Styles for view toggle button */
+    .view-toggle {
+        margin-left: 15px;
+        font-size: 0.8rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        transition: all 0.3s ease;
+    }
+    
+    .view-toggle:hover {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+        transform: translateY(-1px);
+    }
+    
+    .view-toggle i {
+        margin-right: 5px;
+    }
+    
+    /* Additional styles for compact view */
+    .compact-view .history-card {
+        margin-bottom: 10px;
+    }
+    
+    .compact-view .history-card .card-header {
+        padding: 5px 10px;
+    }
+    
+    .compact-view .history-card .card-body {
+        padding: 10px;
+    }
+    
+    .compact-view .filter-buttons {
+        margin-bottom: 10px;
+    }
+    
+    .compact-view .seva-date, 
+    .compact-view .donation-date {
+        font-size: 0.8rem;
+        margin-bottom: 5px;
+    }
+    
+    .compact-view .card-title {
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+    
+    .compact-view .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+    }
+    
+    .compact-view .timeline-column {
+        padding: 0 5px;
+    }
+    
+    .compact-view .seva-type,
+    .compact-view .donation-purpose {
+        padding: 2px 6px;
+        margin-bottom: 3px;
+    }
+    
+    /* Enhanced Pagination styles */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 25px;
+        margin-bottom: 15px;
+    }
+    
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        gap: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 5px 8px;
+        border-radius: 30px;
+        background-color: #fff;
+    }
+    
+    .pagination li {
+        margin: 0;
+    }
+    
+    .pagination .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        text-decoration: none;
+        color: var(--text-dark);
+        font-weight: 500;
+        transition: all 0.25s ease;
+        border: 1px solid #f0f0f0;
+        background-color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .pagination .page-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, var(--orange-gradient-start, #FF7F00), var(--orange-gradient-end, #FF9033));
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.25s ease;
+        border-radius: 50%;
+        z-index: -1;
+    }
+    
+    .pagination .page-link:hover {
+        color: #000;
+        border-color: rgba(var(--primary-orange-rgb, 255,128,0), 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 3px 8px rgba(var(--primary-orange-rgb, 255,128,0), 0.15);
+    }
+    
+    .pagination .page-link:hover::before {
+        opacity: 0.1;
+        transform: scale(1);
+    }
+    
+    .pagination .active .page-link {
+        background: linear-gradient(135deg, var(--orange-gradient-start, #FF7F00), var(--orange-gradient-end, #FF9033));
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 3px 10px rgba(var(--primary-orange-rgb, 255,128,0), 0.3);
+        transform: translateY(-2px);
+        font-weight: 600;
+    }
+    
+    .pagination .active .page-link::before {
+        display: none;
+    }
+    
+    .pagination .disabled .page-link {
+        color: #ccc;
+        pointer-events: none;
+        background-color: #f8f9fa;
+        border-color: #eee;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .pagination .page-item:first-child .page-link,
+    .pagination .page-item:last-child .page-link {
+        background-color: rgba(var(--primary-orange-rgb, 255,128,0), 0.03);
+        border-color: rgba(var(--primary-orange-rgb, 255,128,0), 0.1);
+        font-size: 1.1rem;
+    }
+    
+    .compact-view .pagination {
+        padding: 3px 6px;
+        gap: 3px;
+    }
+    
+    .compact-view .pagination .page-link {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+    
+    /* Added to hide items when paginated */
+    .paginated-item {
+        display: none !important;
+    }
+    
+    .paginated-item.visible {
+        display: block !important;
+    }
+    
+    /* Ensure grid columns and container are preserved */
+    .col-12.col-sm-6.col-lg-3.paginated-item.visible {
+        display: block !important;
+    }
+    
+    /* Fix for grid visibility */
+    .row > .paginated-item {
+        display: none !important;
+    }
+    
+    .row > .paginated-item.visible {
+        display: block !important;
+    }
+    
+    /* Time display styling */
+    .time-display {
+        font-size: 0.75rem;
+        color: var(--text-medium);
+        margin-left: 5px;
+        white-space: nowrap;
+    }
+    
+    .compact-view .time-display {
+        font-size: 0.7rem;
+    }
+    
+    .timeline-time {
+        color: var(--text-medium);
+        font-size: 0.8rem;
+        margin-left: 5px;
+    }
+    
+    /* Filter classes */
+    .filtered-out {
+        display: none !important;
+    }
+    
+    /* This ensures pagination visibility has higher priority */
+    .paginated-item.visible:not(.filtered-out) {
+        display: block !important;
+    }
+    
+    /* Activity Details Modal Styling */
+    .activity-details {
+        padding: 10px;
+    }
+    
+    .details-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .details-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .details-label {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+    
+    .details-value {
+        color: var(--text-medium);
+        text-align: right;
+    }
+    
+    .activity-details .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    
+    /* Pay Now button styling */
+    .pay-now-btn {
+        background-color: #f8c200;
+        border-color: #e8b800;
+        color: #212529;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .pay-now-btn:hover {
+        background-color: #f0b800;
+        border-color: #e0ab00;
+        transform: translateY(-2px);
+        box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+    }
+    
+    .pay-now-btn i {
+        margin-right: 3px;
+    }
+    
+    .btn-group .pay-now-btn {
+        margin-right: 4px;
+    }
+    
+    /* Cancel button styling */
+    .cancel-btn {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #dc3545;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .cancel-btn:hover {
+        background-color: #f1f3f5;
+        border-color: #dc3545;
+        color: #dc3545;
+        transform: translateY(-2px);
+    }
+    
+    .cancel-btn i {
+        margin-right: 3px;
+    }
+    
+    .btn-group .cancel-btn {
+        margin-right: 4px;
+    }
+    
+    /* Improved button layout for pending cards */
+    .history-card .card-body {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .history-card .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+    
+    /* Style for pending card actions */
+    .pending-card-actions {
+        display: flex;
+        flex-direction: column;
+        margin-top: 8px;
+        border-top: 1px dashed rgba(0,0,0,0.08);
+        padding-top: 8px;
+    }
+    
+    .pending-card-actions .primary-actions {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+    
+    .pending-card-actions .secondary-actions {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .pending-card-actions .btn {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">My Activity</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-3" id="activityTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">All Activity</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="sevas-tab" data-bs-toggle="tab" data-bs-target="#sevas" type="button" role="tab" aria-controls="sevas" aria-selected="false">Sevas</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="donations-tab" data-bs-toggle="tab" data-bs-target="#donations" type="button" role="tab" aria-controls="donations" aria-selected="false">Donations</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab" aria-controls="timeline" aria-selected="false">Timeline</button>
+                </li>
+            </ul>
+                    <div class="tab-content" id="activityTabsContent">
+                <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                            <div class="filter-buttons mb-3">
+                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="all">All Activities</button>
+                                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="donation">Donations</button>
+                                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="seva">Sevas</button>
+                                
+                                <div class="btn-group ms-2">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-sort"></i> Sort by
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                        <li><a class="dropdown-item sort-option active" href="#" data-sort="newest">Newest First</a></li>
+                                        <li><a class="dropdown-item sort-option" href="#" data-sort="oldest">Oldest First</a></li>
+                                        <li><a class="dropdown-item sort-option" href="#" data-sort="amount-high">Amount (High to Low)</a></li>
+                                        <li><a class="dropdown-item sort-option" href="#" data-sort="amount-low">Amount (Low to High)</a></li>
+                                    </ul>
+                            </div>
+                            </div>
+                            <div id="allActivity" class="row g-2">
+                        {% if seva_bookings or donations %}
+                            {% for seva in seva_bookings %}
+                                    <div class="col-12 col-sm-6 col-lg-3 mb-2 seva-item" data-type="seva" 
+                                         data-timestamp="{{ seva.booking_timestamp|default(seva.created_at, true)|default('0')|int }}">
+                                <div class="history-card card">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <span>Seva Booking</span>
+                                                <span class="badge badge-pill {% if seva.status == 'pending' %}badge-warning{% elif seva.status == 'completed' or seva.status == 'confirmed' %}badge-success{% elif seva.status == 'cancelled' %}badge-cancelled{% else %}badge-secondary{% endif %}">
+                                            {{ seva.status }}
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <span class="seva-type">{{ seva.seva_type }}</span>
+                                        <h5 class="card-title">{{ seva.seva_name }}</h5>
+                                                <p class="seva-date">
+                                                    <i class="far fa-calendar-alt me-2"></i>{{ seva.seva_date_str | default(seva.seva_date, true) }}
+                                                    <span class="time-display">
+                                                        {% if seva.booking_time %}
+                                                            <i class="far fa-clock me-1"></i>{{ seva.booking_time }}
+                                                        {% elif seva.created_at and seva.created_at.strftime %}
+                                                            <i class="far fa-clock me-1"></i>{{ seva.created_at.strftime('%H:%M') }}
+                                                        {% endif %}
+                                                    </span>
+                                                </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fs-5 fw-bold">₹{{ seva.amount }}</span>
+                                                    <div class="btn-group">
+                                                        {% if seva.status == 'pending' %}
+                                                        <button class="btn btn-sm btn-warning pay-now-btn" onclick="handlePayment('seva', '{{ seva._id }}')">
+                                                            <i class="fas fa-credit-card"></i> <span class="btn-text">Pay Now</span>
+                                                        </button>
+                                                        <button class="btn btn-sm cancel-btn" onclick="handleCancel('seva', '{{ seva._id }}')">
+                                                            <i class="fas fa-times"></i> <span class="btn-text">Cancel</span>
+                                                        </button>
+                                                        {% endif %}
+                                                        <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('{{ seva._id }}', 'seva')">
+                                                            <i class="fas fa-info-circle"></i> <span class="btn-text">Details</span>
+                                                        </button>
+                                                        {% if seva.status == 'confirmed' or seva.status == 'completed' %}
+                                                        <a href="/seva/receipt/{{ seva.transaction_id or seva._id }}" class="btn btn-sm btn-outline-success">
+                                                            <i class="fas fa-download"></i> <span class="btn-text">Receipt</span>
+                                                        </a>
+                                                        {% endif %}
+                                                    </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% for donation in donations %}
+                                    <div class="col-12 col-sm-6 col-lg-3 mb-2 donation-item" data-type="donation" 
+                                         data-timestamp="{{ donation.timestamp|default(donation.created_at, true)|default('0')|int }}">
+                                <div class="history-card card">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <span>Donation</span>
+                                        <span class="badge badge-pill {% if donation.status == 'pending' %}badge-warning{% elif donation.status == 'completed' %}badge-success{% elif donation.status == 'cancelled' %}badge-cancelled{% else %}badge-secondary{% endif %}">
+                                            {{ donation.status }}
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <span class="donation-purpose">{{ donation.purpose or donation.donation_type_name or 'General Donation' }}</span>
+                                        <h5 class="card-title">{{ donation.title or 'Temple Donation' }}</h5>
+                                        <p class="donation-date">
+                                            <i class="far fa-calendar-alt me-2"></i>
+                                            {% if donation.date is defined %}
+                                                {% if donation.date is string %}
+                                                    {{ donation.date }}
+                                                {% else %}
+                                                    {{ donation.date.strftime('%Y-%m-%d') }}
+                                                {% endif %}
+                                            {% elif donation.donation_date is defined %}
+                                                {% if donation.donation_date is string %}
+                                                    {{ donation.donation_date }}
+                                                {% else %}
+                                                    {{ donation.donation_date.strftime('%Y-%m-%d') }}
+                                                {% endif %}
+                                            {% else %}
+                                                {{ donation.created_at.strftime('%Y-%m-%d') if donation.created_at else 'N/A' }}
+                                            {% endif %}
+                                            <span class="time-display">
+                                                {% if donation.time %}
+                                                    <i class="far fa-clock me-1"></i>{{ donation.time }}
+                                                {% elif donation.created_at and donation.created_at.strftime %}
+                                                    <i class="far fa-clock me-1"></i>{{ donation.created_at.strftime('%H:%M') }}
+                                                {% endif %}
+                                            </span>
+                                        </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fs-5 fw-bold">₹{{ donation.amount }}</span>
+                                            <div class="btn-group">
+                                                {% if donation.status == 'pending' %}
+                                                <button class="btn btn-sm btn-warning pay-now-btn" onclick="handlePayment('donation', '{{ donation._id }}')">
+                                                    <i class="fas fa-credit-card"></i> <span class="btn-text">Pay Now</span>
+                                                </button>
+                                                <button class="btn btn-sm cancel-btn" onclick="handleCancel('donation', '{{ donation._id }}')">
+                                                    <i class="fas fa-times"></i> <span class="btn-text">Cancel</span>
+                                                </button>
+                                                {% endif %}
+                                                <button class="btn btn-sm btn-outline-primary donation-details-btn" onclick="viewDonationDetails('{{ donation._id }}')">
+                                                    <i class="fas fa-info-circle"></i> <span class="btn-text">Details</span>
+                                                </button>
+                                                {% if donation.status == 'completed' %}
+                                                <a href="/donations/receipt/{{ donation.transaction_id or donation.payment_id }}" class="btn btn-sm btn-outline-success donation-receipt-btn">
+                                                    <i class="fas fa-download"></i> <span class="btn-text">Receipt</span>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="col-12">
+                                <div class="history-empty">
+                                    <i class="fas fa-history"></i>
+                                    <h4>No Activity Found</h4>
+                                    <p>You haven't participated in any sevas or made any donations yet. Start your spiritual journey by exploring our offerings.</p>
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <a href="/sevas" class="btn btn-primary">Browse Sevas</a>
+                                        <a href="/donations" class="btn btn-outline-primary">Make a Donation</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <!-- Add pagination container after each activity listing -->
+                    <!-- For All Activity tab -->
+                    <div id="allActivityPagination" class="pagination-container">
+                        <ul class="pagination"></ul>
+                    </div>
+                </div>
+                
+                <!-- Sevas Tab -->
+                <div class="tab-pane fade" id="sevas" role="tabpanel" aria-labelledby="sevas-tab">
+                            <div id="sevasContent" class="row g-2">
+                        {% if seva_bookings %}
+                            {% for seva in seva_bookings %}
+                                    <div class="col-12 col-sm-6 col-lg-3 mb-2 seva-item" data-type="seva" 
+                                         data-timestamp="{{ seva.booking_timestamp|default(seva.created_at, true)|default('0')|int }}">
+                                <div class="history-card card">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <span>Seva Booking</span>
+                                                <span class="badge badge-pill {% if seva.status == 'pending' %}badge-warning{% elif seva.status == 'completed' or seva.status == 'confirmed' %}badge-success{% elif seva.status == 'cancelled' %}badge-cancelled{% else %}badge-secondary{% endif %}">
+                                            {{ seva.status }}
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <span class="seva-type">{{ seva.seva_type }}</span>
+                                        <h5 class="card-title">{{ seva.seva_name }}</h5>
+                                                <p class="seva-date">
+                                                    <i class="far fa-calendar-alt me-2"></i>{{ seva.seva_date_str | default(seva.seva_date, true) }}
+                                                    <span class="time-display">
+                                                        {% if seva.booking_time %}
+                                                            <i class="far fa-clock me-1"></i>{{ seva.booking_time }}
+                                                        {% elif seva.created_at and seva.created_at.strftime %}
+                                                            <i class="far fa-clock me-1"></i>{{ seva.created_at.strftime('%H:%M') }}
+                                                        {% endif %}
+                                                    </span>
+                                                </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fs-5 fw-bold">₹{{ seva.amount }}</span>
+                                                    <div class="btn-group">
+                                                        {% if seva.status == 'pending' %}
+                                                        <button class="btn btn-sm btn-warning pay-now-btn" onclick="handlePayment('seva', '{{ seva._id }}')">
+                                                            <i class="fas fa-credit-card"></i> <span class="btn-text">Pay Now</span>
+                                                        </button>
+                                                        <button class="btn btn-sm cancel-btn" onclick="handleCancel('seva', '{{ seva._id }}')">
+                                                            <i class="fas fa-times"></i> <span class="btn-text">Cancel</span>
+                                                        </button>
+                                                        {% endif %}
+                                                        <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('{{ seva._id }}', 'seva')">
+                                                            <i class="fas fa-info-circle"></i> <span class="btn-text">Details</span>
+                                                        </button>
+                                                        {% if seva.status == 'confirmed' or seva.status == 'completed' %}
+                                                        <a href="/seva/receipt/{{ seva.transaction_id or seva._id }}" class="btn btn-sm btn-outline-success">
+                                                            <i class="fas fa-download"></i> <span class="btn-text">Receipt</span>
+                                                        </a>
+                                                        {% endif %}
+                                                    </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="col-12">
+                                <div class="history-empty">
+                                    <i class="fas fa-pray"></i>
+                                    <h4>No Sevas Found</h4>
+                                    <p>You haven't booked any sevas yet. Start your spiritual journey by booking your first seva.</p>
+                                    <a href="/sevas" class="btn btn-primary">Browse Sevas</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <!-- Add pagination container after each activity listing -->
+                    <!-- For Sevas tab -->
+                    <div id="sevasPagination" class="pagination-container">
+                        <ul class="pagination"></ul>
+                    </div>
+                </div>
+                
+                <!-- Donations Tab -->
+                <div class="tab-pane fade" id="donations" role="tabpanel" aria-labelledby="donations-tab">
+                            <div id="donationsContent" class="row g-2">
+                        {% if donations %}
+                            {% for donation in donations %}
+                                    <div class="col-12 col-sm-6 col-lg-3 mb-2 donation-item" data-type="donation" 
+                                         data-timestamp="{{ donation.timestamp|default(donation.created_at, true)|default('0')|int }}">
+                                <div class="history-card card">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <span>Donation</span>
+                                        <span class="badge badge-pill {% if donation.status == 'pending' %}badge-warning{% elif donation.status == 'completed' %}badge-success{% elif donation.status == 'cancelled' %}badge-cancelled{% else %}badge-secondary{% endif %}">
+                                            {{ donation.status }}
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <span class="donation-purpose">{{ donation.purpose or donation.donation_type_name or 'General Donation' }}</span>
+                                        <h5 class="card-title">{{ donation.title or 'Temple Donation' }}</h5>
+                                        <p class="donation-date">
+                                            <i class="far fa-calendar-alt me-2"></i>
+                                            {% if donation.date is defined %}
+                                                {% if donation.date is string %}
+                                                    {{ donation.date }}
+                                                {% else %}
+                                                    {{ donation.date.strftime('%Y-%m-%d') }}
+                                                {% endif %}
+                                            {% elif donation.donation_date is defined %}
+                                                {% if donation.donation_date is string %}
+                                                    {{ donation.donation_date }}
+                                                {% else %}
+                                                    {{ donation.donation_date.strftime('%Y-%m-%d') }}
+                                                {% endif %}
+                                            {% else %}
+                                                {{ donation.created_at.strftime('%Y-%m-%d') if donation.created_at else 'N/A' }}
+                                            {% endif %}
+                                            <span class="time-display">
+                                                {% if donation.time %}
+                                                    <i class="far fa-clock me-1"></i>{{ donation.time }}
+                                                {% elif donation.created_at and donation.created_at.strftime %}
+                                                    <i class="far fa-clock me-1"></i>{{ donation.created_at.strftime('%H:%M') }}
+                                                {% endif %}
+                                            </span>
+                                        </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fs-5 fw-bold">₹{{ donation.amount }}</span>
+                                            <div class="btn-group">
+                                                {% if donation.status == 'pending' %}
+                                                <button class="btn btn-sm btn-warning pay-now-btn" onclick="handlePayment('donation', '{{ donation._id }}')">
+                                                    <i class="fas fa-credit-card"></i> <span class="btn-text">Pay Now</span>
+                                                </button>
+                                                <button class="btn btn-sm cancel-btn" onclick="handleCancel('donation', '{{ donation._id }}')">
+                                                    <i class="fas fa-times"></i> <span class="btn-text">Cancel</span>
+                                                </button>
+                                                {% endif %}
+                                                <button class="btn btn-sm btn-outline-primary donation-details-btn" onclick="viewDonationDetails('{{ donation._id }}')">
+                                                    <i class="fas fa-info-circle"></i> <span class="btn-text">Details</span>
+                                                </button>
+                                                {% if donation.status == 'completed' %}
+                                                <a href="/donations/receipt/{{ donation.transaction_id or donation.payment_id }}" class="btn btn-sm btn-outline-success donation-receipt-btn">
+                                                    <i class="fas fa-download"></i> <span class="btn-text">Receipt</span>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="col-12">
+                                <div class="history-empty">
+                                    <i class="fas fa-hand-holding-heart"></i>
+                                    <h4>No Donations Found</h4>
+                                    <p>You haven't made any donations yet. Support our temple with your generous contribution.</p>
+                                    <a href="/donations" class="btn btn-primary">Make a Donation</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <!-- Add pagination container after each activity listing -->
+                    <!-- For Donations tab -->
+                    <div id="donationsPagination" class="pagination-container">
+                        <ul class="pagination"></ul>
+                    </div>
+                </div>
+                
+                <!-- Timeline Tab -->
+                <div class="tab-pane fade" id="timeline" role="tabpanel" aria-labelledby="timeline-tab">
+                    <div class="timeline">
+                        {% if seva_bookings or donations %}
+                            <div class="timeline-container" id="timelineContent">
+                            {% for item in combined_activity %}
+                                    <div class="timeline-column" data-timestamp="{{ item.timestamp|default('0')|int }}">
+                                    <div class="timeline-content">
+                                            <div class="timeline-date">
+                                                {{ item.date }}
+                                                <span class="timeline-time">
+                                                    {% if item.time %}
+                                                        <i class="far fa-clock me-1"></i>{{ item.time }}
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                        <h5 class="timeline-title">{{ item.title }}</h5>
+                                        <p>{{ item.description }}</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="badge badge-pill {% if item.status == 'pending' %}badge-warning{% elif item.status == 'completed' or item.status == 'confirmed' %}badge-success{% elif item.status == 'cancelled' %}badge-cancelled{% else %}badge-secondary{% endif %}">
+                                            {{ item.status }}
+                                        </span>
+                                                    <div>
+                                                        {% if item.status == 'pending' %}
+                                                        <button class="btn btn-sm btn-warning pay-now-btn" onclick="handlePayment('{{ item.type }}', '{{ item.id }}')">
+                                                            <i class="fas fa-credit-card"></i> <span class="btn-text">Pay Now</span>
+                                                        </button>
+                                                        <button class="btn btn-sm cancel-btn" onclick="handleCancel('{{ item.type }}', '{{ item.id }}')">
+                                                            <i class="fas fa-times"></i> <span class="btn-text">Cancel</span>
+                                                        </button>
+                                                        {% endif %}
+                                                        {% if item.type == 'donation' and item.transaction_id and item.status != 'cancelled' %}
+                                                            <a href="/donations/receipt/{{ item.transaction_id }}" class="btn btn-sm btn-outline-success">
+                                                                <i class="fas fa-download"></i> <span class="btn-text">Receipt</span>
+                                                            </a>
+                                                        {% endif %}
+                                                        {% if item.type == 'seva' %}
+                                                            <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('{{ item.id }}', '{{ item.type }}')">
+                                                                <i class="fas fa-info-circle"></i> <span class="btn-text">Details</span>
+                                                            </button>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                            <!-- Add timeline pagination -->
+                            <div id="timelineContentPagination" class="pagination-container timeline-pagination-container">
+                                <ul class="pagination"></ul>
+                            </div>
+                        {% else %}
+                            <div class="history-empty">
+                                <i class="fas fa-stream"></i>
+                                <h4>No Activity Timeline</h4>
+                                <p>Your activity timeline will populate as you interact with the temple through sevas and donations.</p>
+                            </div>
+                        {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!-- Activity Detail Modal -->
+<div class="modal fade" id="activityDetailModal" tabindex="-1" aria-labelledby="activityDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="activityDetailModalLabel">Activity Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded - initializing history page");
+    
+    // Initialize Bootstrap dropdown using direct DOM access
+    const sortDropdown = document.getElementById('sortDropdown');
+    if (sortDropdown) {
+        // Create Bootstrap dropdown instance
+        const dropdown = new bootstrap.Dropdown(sortDropdown);
+        
+        // Manually toggle dropdown for better control
+        sortDropdown.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdown.toggle();
+        });
+        
+        // Close dropdown when clicking a sort option
+        document.querySelectorAll('.sort-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                dropdown.hide();
+                const sortType = this.getAttribute('data-sort');
+                applySortToAll(sortType);
+            });
+        });
+    }
+    
+    // Filter buttons functionality for All Activity tab
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const sevaItems = document.querySelectorAll('.seva-item');
+    const donationItems = document.querySelectorAll('.donation-item');
+    
+    // Initialize all items to be visible
+    function showAllItems() {
+        sevaItems.forEach(item => item.style.display = 'block');
+        donationItems.forEach(item => item.style.display = 'block');
+    }
+    
+    // Show only specific type of items
+    function filterItems(filterType) {
+        // First, remove any filtering classes
+        sevaItems.forEach(item => {
+            item.classList.remove('filtered-out');
+            // Don't change display directly, let pagination handle it
+        });
+        donationItems.forEach(item => {
+            item.classList.remove('filtered-out');
+            // Don't change display directly, let pagination handle it
+        });
+        
+        // Add filtered-out class based on type
+        if (filterType === 'donation') {
+            sevaItems.forEach(item => item.classList.add('filtered-out'));
+        } else if (filterType === 'seva') {
+            donationItems.forEach(item => item.classList.add('filtered-out'));
+        }
+        
+        // Apply filtering immediately
+        document.querySelectorAll('.filtered-out').forEach(item => {
+            item.classList.remove('visible');
+            item.style.display = 'none';
+        });
+        
+        // Store filter type in localStorage
+        localStorage.setItem('historyFilterType', filterType);
+        
+        // Reset pagination after filtering to account for filtered items
+        if (window.allActivityPagination) {
+            // Short timeout to ensure DOM updates first
+            setTimeout(() => {
+                window.allActivityPagination();
+            }, 50);
+        }
+        
+        console.log('Filter applied:', filterType, 'Seva items:', sevaItems.length, 'Donation items:', donationItems.length);
+    }
+    
+    // Update button active state
+    function updateButtonState(clickedButton) {
+        filterButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-primary');
+        });
+        
+        clickedButton.classList.add('active');
+        clickedButton.classList.add('btn-primary');
+        clickedButton.classList.remove('btn-outline-primary');
+    }
+    
+    // Add click event listener to each filter button
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filterType = this.getAttribute('data-filter');
+            updateButtonState(this);
+            filterItems(filterType);
+            
+            // Re-render pagination after filtering
+            if (window.allActivityPagination) window.allActivityPagination();
+            
+            // Log to console for debugging
+            console.log('Filter applied:', filterType);
+        });
+    });
+    
+    // Initialize with "All Activities" filter
+    const allButton = document.querySelector('.filter-btn[data-filter="all"]');
+    if (allButton) {
+        updateButtonState(allButton);
+        filterItems('all');
+    }
+    
+    // View details modal behavior
+    window.viewDetails = function(id, type) {
+        const modal = document.getElementById('activityDetailModal');
+        
+        fetch(`/user/activity-details/${type}/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                modal.querySelector('.modal-title').textContent = data.title;
+                modal.querySelector('.modal-body').innerHTML = data.content;
+                
+                // Using Bootstrap's modal method if available
+                if (typeof bootstrap !== 'undefined') {
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+        } else {
+                    // Fallback if Bootstrap JS is not loaded
+                    modal.style.display = 'block';
+                    modal.classList.add('show');
+                }
+            })
+            .catch(error => {
+                alert('Error loading details. Please try again.');
+                console.error('Error:', error);
+            });
+    };
+    
+    // Add the missing viewDonationDetails function
+    window.viewDonationDetails = function(id) {
+        // Call the existing viewDetails function with 'donation' as the type
+        viewDetails(id, 'donation');
+    };
+    
+    // Handle payment for pending items
+    window.handlePayment = function(type, id) {
+        // Show a loading indicator
+        const button = event.target.closest('.pay-now-btn');
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        button.disabled = true;
+        
+        // Redirect to the appropriate payment page based on type
+        let paymentUrl = '';
+        if (type === 'seva') {
+            // Use the full URL with 'seva.' blueprint prefix to avoid redirection issues
+            paymentUrl = '/seva/confirm_order/' + id;
+        } else if (type === 'donation') {
+            paymentUrl = '/donations/resume-payment/' + id;
+        }
+        
+        // Redirect or open a modal for payment
+        if (paymentUrl) {
+            window.location.href = paymentUrl;
+        } else {
+            // Restore button if we couldn't determine the URL
+            button.innerHTML = originalContent;
+            button.disabled = false;
+            alert('Payment option not available for this item. Please contact support.');
+        }
+    };
+    
+    // Handle cancel for pending items
+    window.handleCancel = function(type, id) {
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to cancel this ' + type + '? This action cannot be undone.')) {
+            return;
+        }
+        
+        // Show a loading indicator
+        const button = event.target.closest('.cancel-btn');
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+        button.disabled = true;
+        
+        // Send the cancellation request to the server
+        fetch('/user/cancel-activity/' + type + '/' + id, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                type: type,
+                id: id
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                alert(data.message || 'Successfully cancelled.');
+                
+                // Reload the page to reflect changes
+                window.location.reload();
+            } else {
+                // Show error message
+                alert(data.message || 'Failed to cancel. Please try again.');
+                
+                // Restore button
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while trying to cancel. Please try again.');
+            
+            // Restore button
+            button.innerHTML = originalContent;
+            button.disabled = false;
+        });
+    };
+    
+    // Set up timestamps for each activity item based on dates
+    function updateTimestampsFromDates() {
+        document.querySelectorAll('.seva-item, .donation-item, .timeline-column').forEach(item => {
+            // Only update if data-timestamp is not set or is 0
+            if (!item.getAttribute('data-timestamp') || item.getAttribute('data-timestamp') === '0') {
+                let dateText = '';
+                let timestamp = 0;
+                
+                // Get date text content
+                if (item.classList.contains('seva-item')) {
+                    const dateEl = item.querySelector('.seva-date');
+                    if (dateEl) dateText = dateEl.textContent.trim();
+                } else if (item.classList.contains('donation-item')) {
+                    const dateEl = item.querySelector('.donation-date');
+                    if (dateEl) dateText = dateEl.textContent.trim();
+                } else if (item.classList.contains('timeline-column')) {
+                    const dateEl = item.querySelector('.timeline-date');
+                    if (dateEl) dateText = dateEl.textContent.trim();
+                }
+                
+                // Extract date and convert to timestamp
+                if (dateText) {
+                    // Try to match YYYY-MM-DD pattern
+                    const dateMatch = dateText.match(/(\d{4}-\d{2}-\d{2})/);
+                    if (dateMatch && dateMatch[1]) {
+                        const date = new Date(dateMatch[1]);
+                        if (!isNaN(date.getTime())) {
+                            timestamp = Math.floor(date.getTime() / 1000);
+                        }
+                    }
+                }
+                
+                // If we couldn't extract a timestamp, use current time
+                if (!timestamp) {
+                    timestamp = Math.floor(Date.now() / 1000);
+                }
+                
+                item.setAttribute('data-timestamp', timestamp);
+            }
+        });
+    }
+    
+    // Update timestamps first
+    updateTimestampsFromDates();
+    
+    // Setup pagination for each tab
+    window.allActivityPagination = setupPagination('allActivity', '.seva-item, .donation-item', 12);
+    window.sevasPagination = setupPagination('sevasContent', '.seva-item', 12);
+    window.donationsPagination = setupPagination('donationsContent', '.donation-item', 12);
+    window.timelinePagination = setupPagination('timelineContent', '.timeline-column', 12); // Use 12 items for timeline too
+    
+    // Re-render pagination when tabs are changed
+    const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const targetId = e.target.getAttribute('data-bs-target').replace('#', '');
+            if (targetId === 'all' && window.allActivityPagination) {
+                window.allActivityPagination();
+            } else if (targetId === 'sevas' && window.sevasPagination) {
+                window.sevasPagination();
+            } else if (targetId === 'donations' && window.donationsPagination) {
+                window.donationsPagination();
+            } else if (targetId === 'timeline' && window.timelinePagination) {
+                window.timelinePagination();
+            }
+        });
+    });
+    
+    // Add sort functionality
+    const sortOptions = document.querySelectorAll('.sort-option');
+    if (sortOptions.length) {
+        sortOptions.forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sortType = this.getAttribute('data-sort');
+                applySortToAll(sortType);
+            });
+        });
+        
+        // Apply saved sort preference or default to newest
+        const savedSortType = localStorage.getItem('historySortPreference') || 'newest';
+        applySortToAll(savedSortType);
+    }
+});
+
+// Modify the setupPagination function to accept the sorting option
+function setupPagination(containerId, itemSelector, itemsPerPage = 12) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Get sorting preference
+    const sortType = localStorage.getItem('historySortPreference') || 'newest';
+    
+    // Sort container items first (if not already sorted)
+    sortItems(containerId, sortType);
+    
+    const items = Array.from(container.querySelectorAll(itemSelector));
+    if (!items.length) return; // No items to paginate
+    
+    console.log(`Paginating ${containerId}: ${items.length} items found, showing ${itemsPerPage} per page`);
+    
+    const paginationId = containerId + 'Pagination';
+    const paginationContainer = document.getElementById(paginationId);
+    if (!paginationContainer) return;
+    
+    const paginationList = paginationContainer.querySelector('.pagination');
+    if (!paginationList) return;
+    
+    // Add paginated-item class to all items and initially hide them
+    items.forEach(item => {
+        item.classList.add('paginated-item');
+        item.style.display = 'none';
+    });
+    
+    // Initialize pagination with the remembered page or default to page 1
+    let currentPage = parseInt(localStorage.getItem(containerId + 'CurrentPage') || '1');
+    const maxPage = Math.ceil(items.length / itemsPerPage);
+    if (currentPage > maxPage) currentPage = 1;
+    if (currentPage < 1) currentPage = 1;
+    
+    function showPage(pageNum) {
+        // Hide all items
+        items.forEach(item => {
+            item.classList.remove('visible');
+            item.style.display = 'none'; // Explicitly set display none
+        });
+        
+        // Get only non-filtered items
+        const visibleItems = items.filter(item => !item.classList.contains('filtered-out'));
+        
+        // Calculate start and end indices based on visible items
+        const startIndex = (pageNum - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, visibleItems.length);
+        
+        console.log(`Showing page ${pageNum} of ${containerId}, showing visible items ${startIndex} to ${endIndex-1} of ${visibleItems.length} (total: ${items.length})`);
+        
+        // Show items for current page
+        for (let i = startIndex; i < endIndex; i++) {
+            if (visibleItems[i]) {
+                visibleItems[i].classList.add('visible');
+                visibleItems[i].style.display = ''; // Reset display property
+            }
+        }
+        
+        // Update active page in pagination
+        const pageLinks = paginationList.querySelectorAll('.page-link');
+        pageLinks.forEach(link => {
+            link.parentElement.classList.remove('active');
+            if (link.getAttribute('data-page') && parseInt(link.getAttribute('data-page')) === pageNum) {
+                link.parentElement.classList.add('active');
+            }
+        });
+        
+        // Save current page to localStorage
+        localStorage.setItem(containerId + 'CurrentPage', pageNum);
+    }
+    
+    function renderPagination() {
+        if (items.length <= itemsPerPage) {
+            paginationContainer.style.display = 'none';
+            items.forEach(item => item.classList.add('visible'));
+            return;
+        }
+        
+        paginationContainer.style.display = 'flex';
+        const pageCount = Math.ceil(items.length / itemsPerPage);
+        
+        // Clear pagination
+        paginationList.innerHTML = '';
+        
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = 'page-item';
+        if (currentPage <= 1) prevLi.classList.add('disabled');
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.setAttribute('aria-label', 'Previous');
+        prevLink.setAttribute('data-page', 'prev');
+        prevLink.innerHTML = '<span aria-hidden="true">&laquo;</span>';
+        prevLi.appendChild(prevLink);
+        paginationList.appendChild(prevLi);
+        
+        // Page numbers - with ellipsis for large page counts
+        const displayRangeStart = Math.max(1, currentPage - 2);
+        const displayRangeEnd = Math.min(pageCount, currentPage + 2);
+        
+        // Show first page if we're not starting at 1
+        if (displayRangeStart > 1) {
+            const li = document.createElement('li');
+            li.className = 'page-item';
+            const link = document.createElement('a');
+            link.className = 'page-link';
+            link.href = '#';
+            link.setAttribute('data-page', 1);
+            link.textContent = '1';
+            li.appendChild(link);
+            paginationList.appendChild(li);
+            
+            // Add ellipsis if needed
+            if (displayRangeStart > 2) {
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                const ellipsisLink = document.createElement('a');
+                ellipsisLink.className = 'page-link';
+                ellipsisLink.href = '#';
+                ellipsisLink.innerHTML = '&hellip;';
+                ellipsisLi.appendChild(ellipsisLink);
+                paginationList.appendChild(ellipsisLi);
+            }
+        }
+        
+        // Add page numbers in the display range
+        for (let i = displayRangeStart; i <= displayRangeEnd; i++) {
+            const li = document.createElement('li');
+            li.className = 'page-item';
+            if (i === currentPage) li.classList.add('active');
+            
+            const link = document.createElement('a');
+            link.className = 'page-link';
+            link.href = '#';
+            link.setAttribute('data-page', i);
+            link.textContent = i;
+            
+            li.appendChild(link);
+            paginationList.appendChild(li);
+        }
+        
+        // Show last page if we're not ending at the last page
+        if (displayRangeEnd < pageCount) {
+            // Add ellipsis if needed
+            if (displayRangeEnd < pageCount - 1) {
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                const ellipsisLink = document.createElement('a');
+                ellipsisLink.className = 'page-link';
+                ellipsisLink.href = '#';
+                ellipsisLink.innerHTML = '&hellip;';
+                ellipsisLi.appendChild(ellipsisLink);
+                paginationList.appendChild(ellipsisLi);
+            }
+            
+            const li = document.createElement('li');
+            li.className = 'page-item';
+            const link = document.createElement('a');
+            link.className = 'page-link';
+            link.href = '#';
+            link.setAttribute('data-page', pageCount);
+            link.textContent = pageCount;
+            li.appendChild(link);
+            paginationList.appendChild(li);
+        }
+        
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = 'page-item';
+        if (currentPage >= pageCount) nextLi.classList.add('disabled');
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.setAttribute('aria-label', 'Next');
+        nextLink.setAttribute('data-page', 'next');
+        nextLink.innerHTML = '<span aria-hidden="true">&raquo;</span>';
+        nextLi.appendChild(nextLink);
+        paginationList.appendChild(nextLi);
+        
+        // Add click events
+        paginationList.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent event from bubbling up
+                
+                // Skip if disabled
+                if (this.parentElement.classList.contains('disabled') || 
+                    this.parentElement.classList.contains('active')) {
+                    return;
+                }
+                
+                const pageAction = this.getAttribute('data-page');
+                let newPage = currentPage;
+                
+                if (pageAction === 'prev') {
+                    if (currentPage > 1) {
+                        newPage = currentPage - 1;
+                    }
+                } else if (pageAction === 'next') {
+                    if (currentPage < pageCount) {
+                        newPage = currentPage + 1;
+                    }
+                } else {
+                    newPage = parseInt(pageAction);
+                }
+                
+                if (newPage !== currentPage) {
+                    currentPage = newPage;
+                    localStorage.setItem(containerId + 'CurrentPage', currentPage);
+                    showPage(currentPage);
+                    renderPagination(); // Re-render pagination to update active/disabled states
+                }
+            });
+        });
+    }
+    
+    // Initialize pagination and show the current page
+    renderPagination();
+    showPage(currentPage);
+    
+    // Return the render function for reuse
+    return function() {
+        // Refresh our items collection in case DOM has changed
+        const refreshedItems = Array.from(container.querySelectorAll(itemSelector));
+        if (refreshedItems.length !== items.length) {
+            // DOM has changed, reinitialize pagination
+            refreshedItems.forEach(item => {
+                item.classList.add('paginated-item');
+                
+                // Apply current filter if any
+                const currentFilter = localStorage.getItem('historyFilterType') || 'all';
+                if (currentFilter === 'donation' && item.classList.contains('seva-item')) {
+                    item.classList.add('filtered-out');
+                } else if (currentFilter === 'seva' && item.classList.contains('donation-item')) {
+                    item.classList.add('filtered-out');
+                }
+                
+                item.style.display = 'none';
+            });
+            
+            // Update our items reference
+            items.length = 0;
+            refreshedItems.forEach(item => items.push(item));
+            
+            // Reset to page 1 if our collection changed
+            currentPage = 1;
+            localStorage.setItem(containerId + 'CurrentPage', currentPage);
+        }
+        
+        renderPagination();
+        showPage(currentPage);
+    };
+}
+
+// When sorting, update the paginations as well
+function applySortToAll(sortType) {
+    sortItems('allActivity', sortType);
+    sortItems('sevasContent', sortType);
+    sortItems('donationsContent', sortType);
+    sortItems('timelineContent', sortType);
+    
+    // Re-render all paginations
+    if (window.allActivityPagination) allActivityPagination();
+    if (window.sevasPagination) sevasPagination();
+    if (window.donationsPagination) donationsPagination();
+    if (window.timelinePagination) timelinePagination();
+    
+    // Update active class on sort options
+    document.querySelectorAll('.sort-option').forEach(option => {
+        option.classList.remove('active');
+        if (option.getAttribute('data-sort') === sortType) {
+            option.classList.add('active');
+        }
+    });
+}
+
+// Add JavaScript sorting functions
+// Sorting functionality
+function sortItems(containerId, sortType = 'newest') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const items = Array.from(container.children);
+    if (!items.length) return;
+    
+    // Sort the items
+    items.sort((a, b) => {
+        if (sortType === 'newest') {
+            // Sort by timestamp, newest first
+            const aTime = parseInt(a.getAttribute('data-timestamp') || '0');
+            const bTime = parseInt(b.getAttribute('data-timestamp') || '0');
+            return bTime - aTime;
+        } else if (sortType === 'oldest') {
+            // Sort by timestamp, oldest first
+            const aTime = parseInt(a.getAttribute('data-timestamp') || '0');
+            const bTime = parseInt(b.getAttribute('data-timestamp') || '0');
+            return aTime - bTime;
+        } else if (sortType === 'amount-high' || sortType === 'amount-low') {
+            // Extract amount values
+            const aAmountEl = a.querySelector('.fs-5.fw-bold');
+            const bAmountEl = b.querySelector('.fs-5.fw-bold');
+            
+            if (!aAmountEl || !bAmountEl) return 0;
+            
+            const aAmount = parseInt(aAmountEl.textContent.replace(/[^\d]/g, '') || '0');
+            const bAmount = parseInt(bAmountEl.textContent.replace(/[^\d]/g, '') || '0');
+            
+            return sortType === 'amount-high' ? bAmount - aAmount : aAmount - bAmount;
+        }
+        return 0;
+    });
+    
+    // Reattach sorted items to container
+    items.forEach(item => container.appendChild(item));
+    
+    // Re-run pagination if it exists
+    if (typeof setupPagination === 'function') {
+        const paginationFunction = window[containerId + 'Pagination'];
+        if (paginationFunction && typeof paginationFunction === 'function') {
+            paginationFunction();
+        }
+    }
+    
+    // Save sort preference
+    localStorage.setItem('historySortPreference', sortType);
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,214 @@
+{% extends "user/base.html" %}
+
+{% block title %}Verify Your Email{% endblock %}
+
+{% block styles %}
+<style>
+    .verify-container {
+        max-width: 600px;
+        margin: 60px auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .header-section {
+        background-color: #FF7F00;
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    
+    .header-section p {
+        margin-top: 0.5rem;
+        opacity: 0.9;
+    }
+    
+    .content-card {
+        padding: 2rem;
+    }
+    
+    .flash-message {
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+    
+    .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .flash-message.danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .flash-message.info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .flash-message.warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .otp-form {
+        margin-top: 1rem;
+    }
+    
+    .otp-form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #555;
+    }
+    
+    .otp-form input {
+        width: 100%;
+        padding: 12px;
+        font-size: 18px;
+        text-align: center;
+        letter-spacing: 5px;
+        margin-bottom: 1.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .action-button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background-color: #FF7F00;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .action-button:hover {
+        background-color: #E67300;
+    }
+    
+    .resend-link {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .resend-link a {
+        color: #FF7F00;
+        text-decoration: none;
+    }
+    
+    .resend-link a:hover {
+        text-decoration: underline;
+    }
+    
+    .countdown {
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .countdown span {
+        font-weight: bold;
+        color: #FF7F00;
+    }
+    
+    @media (max-width: 768px) {
+        .verify-container {
+            padding: 1rem;
+            margin: 40px auto;
+        }
+        
+        .header-section {
+            padding: 1.5rem;
+        }
+        
+        .content-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-container">
+    <div class="header-section">
+        <h1>Verify Your Email</h1>
+        <p>Please enter the verification code we sent to your email</p>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="content-card">
+        <h3>Enter Verification Code</h3>
+        <p>We've sent a 6-digit verification code to your email address. The code will expire in 10 minutes.</p>
+        
+        <div class="countdown">
+            Time remaining: <span id="timer">10:00</span>
+        </div>
+        
+        <form action="{{ url_for('user.verify_registration_otp', email=email) }}" method="post" class="otp-form">
+            <!-- CSRF Token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="email" value="{{ email }}">
+            
+            <label for="otp">Enter the 6-digit code sent to {{ email }}:</label>
+            <input type="text" id="otp" name="otp" required maxlength="6" placeholder="• • • • • •">
+            
+            <button type="submit" class="action-button">Verify Email</button>
+        </form>
+        <div class="resend-link">
+            <p>Didn't receive the code? <a href="{{ url_for('user.resend_verification', email=email) }}">Resend OTP</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Countdown timer for OTP expiration
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set the countdown time (10 minutes)
+        let timeLeft = 10 * 60; // 10 minutes in seconds
+        const timerElement = document.getElementById('timer');
+        
+        // Update the timer every second
+        const timerInterval = setInterval(function() {
+            timeLeft--;
+            
+            // Calculate minutes and seconds
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            // Format the time as MM:SS
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // If the timer reaches 0, clear the interval and refresh the page to get a new OTP
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                alert('Your OTP has expired. The page will refresh to generate a new OTP.');
+                window.location.reload();
+            }
+        }, 1000);
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,950 @@
+{% extends "user/base.html" %}
+
+{% block title %}User Profile - Temple Management System{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+.card {
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px 20px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.badge {
+    padding: 8px 12px;
+    border-radius: 20px;
+}
+
+.btn-primary {
+    border-radius: 20px;
+    padding: 8px 20px;
+}
+
+.rounded-circle {
+    border: 3px solid var(--primary-orange);
+}
+
+.stat-card {
+    border-left: 4px solid var(--primary-orange);
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stat-icon {
+    background: linear-gradient(135deg, var(--orange-gradient-start), var(--orange-gradient-end));
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 15px;
+}
+
+.stat-info {
+    flex-grow: 1;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--deep-saffron);
+}
+
+.stat-label {
+    color: var(--text-medium);
+    font-size: 0.9rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+
+.activity-item {
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--primary-orange);
+}
+
+.activity-icon {
+    background-color: var(--primary-orange);
+    color: white;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.activity-text {
+    font-size: 0.9rem;
+}
+
+.activity-date {
+    font-size: 0.8rem;
+    color: var(--text-medium);
+}
+
+.filter-btn {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border-radius: 15px;
+}
+
+.nav-pills .nav-link {
+    border-radius: 10px;
+    padding: 8px 15px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--primary-orange);
+}
+
+.profile-header {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    background-color: var(--sacred-gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    margin-right: 2rem;
+}
+
+.profile-summary h1 {
+    margin-bottom: 0.5rem;
+}
+
+.profile-tabs {
+    margin-bottom: 1.5rem;
+}
+
+.profile-tabs .nav-link {
+    color: var(--bs-dark);
+    border-radius: 50px;
+    padding: 0.7rem 1.5rem;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.profile-tabs .nav-link:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.profile-tabs .nav-link.active {
+    background-color: var(--sacred-gold);
+    color: white;
+    border-color: var(--sacred-gold);
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 1rem 1.25rem;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: var(--sacred-gold);
+}
+
+.activity-text {
+    font-weight: 500;
+}
+
+.activity-date {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.6em;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.7rem;
+}
+
+/* Styles for the activity card */
+.activity-card {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.activity-card:hover {
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-2px);
+}
+
+.activity-card .card-title {
+    color: var(--primary-color, #FF7F00);
+    font-size: 1.2rem;
+}
+
+.filter-buttons .btn-group {
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.filter-btn {
+    padding: 0.4rem 1rem;
+    border: none !important;
+    color: #555;
+    background-color: #f8f9fa;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:first-child {
+    border-top-left-radius: 25px;
+    border-bottom-left-radius: 25px;
+}
+
+.filter-btn:last-child {
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+}
+
+.filter-btn:hover {
+    color: #333;
+    background-color: #f0f0f0;
+}
+
+.filter-btn.active {
+    color: white;
+    background-color: var(--primary-color, #FF7F00) !important;
+    box-shadow: 0 2px 8px rgba(255, 127, 0, 0.3);
+}
+
+.chart-container {
+    width: 100%;
+    margin: 0 auto;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if user %}
+    <div class="row">
+        <!-- User Welcome Section -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-body d-md-flex align-items-center">
+                    <img src="{{ user.profile_picture or url_for('static', filename='images/default_profile.jpg') }}" 
+                         alt="Profile Picture" 
+                         class="rounded-circle me-md-4 mb-3 mb-md-0"
+                         style="width: 100px; height: 100px; object-fit: cover;">
+                    <div>
+                        <h2 class="mb-1">Welcome back, {{ user.name if user.name else 'Devotee' }}!</h2>
+                        <p class="text-muted mb-3">{{ user.email }}</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="{{ url_for('user.edit_profile') }}" class="btn btn-primary">
+                                <i class="fas fa-user-edit me-1"></i> Edit Profile
+                            </a>
+                            <a href="{{ url_for('user.history') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-history me-1"></i> View Full History
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Overview -->
+        <div class="col-12 mb-4">
+            <div class="row">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-pray"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ statistics.total_sevas if statistics and statistics.total_sevas else '0' }}</div>
+                            <div class="stat-label">Total Sevas</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-hand-holding-heart"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ statistics.total_donations if statistics and statistics.total_donations else '0' }}</div>
+                            <div class="stat-label">Total Donations</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-rupee-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">₹{{ statistics.total_amount if statistics and statistics.total_amount else '0' }}</div>
+                            <div class="stat-label">Amount Contributed</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ statistics.upcoming_sevas if statistics and statistics.upcoming_sevas else '0' }}</div>
+                            <div class="stat-label">Upcoming Sevas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content Tabs -->
+        <div class="col-12 mb-4">
+            <ul class="nav nav-pills mb-3" id="userTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="true">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sevas-tab" data-bs-toggle="pill" data-bs-target="#sevas" type="button" role="tab" aria-controls="sevas" aria-selected="false">
+                        <i class="fas fa-pray me-1"></i> Sevas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="donations-tab" data-bs-toggle="pill" data-bs-target="#donations" type="button" role="tab" aria-controls="donations" aria-selected="false">
+                        <i class="fas fa-hand-holding-heart me-1"></i> Donations
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="userTabsContent">
+                <!-- Dashboard Tab -->
+                <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                    <div class="row">
+                        <!-- Activity Chart -->
+                        <div class="col-md-8">
+                            <div class="card activity-card shadow-sm border-0 rounded-lg overflow-hidden">
+                                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center p-4">
+                                    <h5 class="card-title mb-0 fw-bold text-primary">
+                                        <i class="fas fa-chart-line me-2"></i>Your Activity
+                                    </h5>
+                                    <div class="filter-buttons">
+                                        <div class="btn-group" role="group" aria-label="Time period filter">
+                                            <button type="button" class="btn btn-sm filter-btn active" data-period="activity">
+                                                <span>Activity</span>
+                                            </button>
+                                            <button type="button" class="btn btn-sm filter-btn" data-period="total">
+                                                <span>Total</span>
+                                            </button>
+                                            <button type="button" class="btn btn-sm filter-btn" data-period="amount">
+                                                <span>Amount</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="chart-container position-relative" style="height:280px;">
+                                        <canvas id="activityChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Recent Activity</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        {% for item in recent_sevas[:3] %}
+                                        <div class="activity-item list-group-item">
+                                            <div class="d-flex">
+                                                <div class="activity-icon">
+                                                    <i class="fas fa-pray"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="activity-text">Booked {{ item.seva_name }} seva</div>
+                                                    <div class="activity-date">{{ item.booking_date.strftime('%Y-%m-%d') if item.booking_date else 'N/A' }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        
+                                        {% for item in recent_donations[:2] %}
+                                        <div class="activity-item list-group-item">
+                                            <div class="d-flex">
+                                                <div class="activity-icon">
+                                                    <i class="fas fa-hand-holding-heart"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="activity-text">Made a donation of ₹{{ item.amount }}</div>
+                                                    <div class="activity-date">{{ item.donation_date.strftime('%Y-%m-%d') if item.donation_date else 'N/A' }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        
+                                        {% if not recent_sevas and not recent_donations %}
+                                        <div class="list-group-item text-center py-4">
+                                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                                            <p class="mb-0">No recent activity to display</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-footer text-center">
+                                    <a href="{{ url_for('user.history') }}" class="btn btn-sm btn-outline-primary">View All Activity</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sevas Tab -->
+                <div class="tab-pane fade" id="sevas" role="tabpanel" aria-labelledby="sevas-tab">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Your Seva History</h5>
+                            <div class="input-group" style="max-width: 300px;">
+                                <input type="text" class="form-control" placeholder="Search Sevas..." id="sevaSearch">
+                                <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_sevas %}
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="sevasTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Seva Name</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for seva in recent_sevas %}
+                                        <tr>
+                                            <td>{{ seva.seva_date }}</td>
+                                            <td>{{ seva.seva_name }}</td>
+                                            <td>₹{{ seva.amount }}</td>
+                                            <td>
+                                                <span class="badge {% if seva.status == 'pending' %}bg-warning{% elif seva.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {{ seva.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">Details</button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <div class="mb-3"><i class="fas fa-pray fa-3x text-muted"></i></div>
+                                <h5>No Sevas Booked Yet</h5>
+                                <p class="text-muted">Start your spiritual journey by booking a seva</p>
+                                <a href="/sevas" class="btn btn-primary">Browse Sevas</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Donations Tab -->
+                <div class="tab-pane fade" id="donations" role="tabpanel" aria-labelledby="donations-tab">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Your Donation History</h5>
+                            <div class="input-group" style="max-width: 300px;">
+                                <input type="text" class="form-control" placeholder="Search Donations..." id="donationSearch">
+                                <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_donations %}
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="donationsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Purpose</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for donation in recent_donations %}
+                                        <tr>
+                                            <td>
+                                                {% if donation.donation_date is defined %}
+                                                    {% if donation.donation_date is string %}
+                                                        {{ donation.donation_date }}
+                                                    {% else %}
+                                                        {{ donation.donation_date.strftime('%Y-%m-%d') }}
+                                                    {% endif %}
+                                                {% elif donation.date is defined %}
+                                                    {% if donation.date is string %}
+                                                        {{ donation.date }}
+                                                    {% else %}
+                                                        {{ donation.date.strftime('%Y-%m-%d') }}
+                                                    {% endif %}
+                                                {% elif donation.created_at is defined %}
+                                                    {% if donation.created_at is string %}
+                                                        {{ donation.created_at }}
+                                                    {% else %}
+                                                        {{ donation.created_at.strftime('%Y-%m-%d') }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </td>
+                                            <td>₹{{ donation.amount }}</td>
+                                            <td>{{ donation.purpose or donation.donation_type_name or donation.donation_type or 'General' }}</td>
+                                            <td>
+                                                <span class="badge {% if donation.status == 'pending' %}bg-warning{% elif donation.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {{ donation.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="viewDonationDetails('{{ donation._id }}')">
+                                                        <i class="fas fa-info-circle"></i> Details
+                                                    </button>
+                                                    <a href="/donations/receipt/{{ donation.transaction_id or donation.payment_id }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                                        <i class="fas fa-download"></i> Receipt
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <div class="mb-3"><i class="fas fa-hand-holding-heart fa-3x text-muted"></i></div>
+                                <h5>No Donations Made Yet</h5>
+                                <p class="text-muted">Support our temple with your generous contribution</p>
+                                <a href="/donations" class="btn btn-primary">Make a Donation</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        <h4 class="alert-heading">Please Log In</h4>
+        <p>You need to be logged in to view your profile. Please log in to continue.</p>
+        <hr>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('user.login') }}" class="btn btn-primary">Login</a>
+            <a href="{{ url_for('user.register') }}" class="btn btn-outline-primary">Register</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<!-- Initialize data from Jinja templates -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Only initialize chart if user is logged in
+        {% if user %}
+        // Initialize server data
+        var serverData = {
+            monthlyActivity: {% if statistics and statistics.monthly_activity %}{{ statistics.monthly_activity|tojson }}{% else %}{"donations": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "sevas": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "total": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "amounts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]}{% endif %},
+            totalSevas: {% if statistics and statistics.total_sevas %}{{ statistics.total_sevas }}{% else %}0{% endif %},
+            totalDonations: {% if statistics and statistics.total_donations %}{{ statistics.total_donations }}{% else %}0{% endif %},
+            totalAmount: {% if statistics and statistics.total_amount %}{{ statistics.total_amount }}{% else %}0{% endif %},
+            upcomingSevas: {% if statistics and statistics.upcoming_sevas %}{{ statistics.upcoming_sevas }}{% else %}0{% endif %}
+        };
+
+        // Activity Chart
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        
+        // Current year
+        const currentYear = new Date().getFullYear();
+        
+        // Prepare the labels for the chart
+        const chartLabels = serverData.monthlyActivity.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        // Prepare data for different types of visualization
+        const activityData = {
+            labels: chartLabels,
+            datasets: [
+                {
+                    label: 'Donations',
+                    data: serverData.monthlyActivity.donations || [],
+                    backgroundColor: 'rgba(255, 126, 29, 0.6)',
+                    borderColor: 'rgba(255, 126, 29, 1)',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.5
+                },
+                {
+                    label: 'Sevas',
+                    data: serverData.monthlyActivity.sevas || [],
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.5
+                }
+            ]
+        };
+        
+        const totalActivityData = {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Total Activity',
+                data: serverData.monthlyActivity.total || [],
+                backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        };
+        
+        const donationAmountData = {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Donation Amount (₹)',
+                data: serverData.monthlyActivity.amounts || [],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                yAxisID: 'y1'
+            }]
+        };
+        
+        // Chart configuration
+        const chartConfig = {
+            type: 'bar',
+            data: activityData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            precision: 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        };
+        
+        // Create the chart
+        const activityChart = new Chart(ctx, chartConfig);
+        
+        // Function to update chart data based on filter
+        function updateChart(dataType) {
+            activityChart.data = dataType === 'activity' ? activityData : 
+                                 dataType === 'total' ? totalActivityData : 
+                                 donationAmountData;
+            
+            // Update chart type based on data
+            activityChart.config.type = dataType === 'activity' ? 'bar' : 'line';
+            
+            // Update scales for donation amount view
+            if (dataType === 'amount') {
+                activityChart.options.scales.y.title.text = 'Donation Amount (₹)';
+            } else {
+                activityChart.options.scales.y.title.text = 'Count';
+            }
+            
+            activityChart.update();
+        }
+        
+        // Filter buttons for chart
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Toggle active class
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Update chart data
+                const dataType = this.getAttribute('data-period');
+                updateChart(dataType);
+            });
+        });
+        
+        // Search functionality for tables
+        const sevaSearch = document.getElementById('sevaSearch');
+        if (sevaSearch) {
+            sevaSearch.addEventListener('keyup', function() {
+                filterTable('sevasTable', this.value);
+            });
+        }
+        
+        const donationSearch = document.getElementById('donationSearch');
+        if (donationSearch) {
+            donationSearch.addEventListener('keyup', function() {
+                filterTable('donationsTable', this.value);
+            });
+        }
+        
+        function filterTable(tableId, value) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+                
+                for (let j = 0; j < cells.length; j++) {
+                    const cell = cells[j];
+                    if (cell.textContent.toLowerCase().indexOf(value.toLowerCase()) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+                
+                row.style.display = found ? '' : 'none';
+            }
+        }
+        
+        // Quick Donate Function
+        window.quickDonate = function(goalTitle) {
+            console.log("Quick donate function called for:", goalTitle);
+            
+            // Check if user is logged in first
+            if (!document.body.classList.contains('logged-in')) {
+                alert("Please log in to make a donation");
+                window.location.href = "{{ url_for('user.login') }}";
+                return;
+            }
+            
+            // Ask for donation amount using prompt
+            const amount = prompt(`Enter donation amount for ${goalTitle}:`, "1000");
+            console.log("Amount entered:", amount);
+            
+            // Validate amount
+            if (amount === null) {
+                // User cancelled
+                console.log("Donation cancelled by user");
+                return;
+            }
+            
+            const donationAmount = parseFloat(amount);
+            if (isNaN(donationAmount) || donationAmount <= 0) {
+                alert("Please enter a valid amount greater than 0");
+                return;
+            }
+            
+            // Confirm donation
+            if (!confirm(`Confirm donation of ₹${donationAmount} for ${goalTitle}?`)) {
+                console.log("Donation confirmation declined");
+                return;
+            }
+            
+            console.log("Processing donation of ₹" + donationAmount + " for " + goalTitle);
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('goal_title', goalTitle);
+            formData.append('amount', donationAmount);
+            
+            // Display processing message
+            const processingMsg = document.createElement('div');
+            processingMsg.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-4';
+            processingMsg.style.zIndex = '9999';
+            processingMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing your donation...';
+            document.body.appendChild(processingMsg);
+            
+            // Send AJAX request
+            fetch('/user/quick-donate', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log("Server response status:", response.status);
+                // Handle non-200 responses better
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error("You must be logged in to donate");
+                    } else {
+                        return response.json().then(data => {
+                            throw new Error(data.message || "Server error: " + response.status);
+                        });
+                    }
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Server response data:", data);
+                document.body.removeChild(processingMsg);
+                
+                if (data.status === 'success') {
+                    alert(data.message);
+                    // Reload page to show updated progress
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'An error occurred during donation');
+                }
+            })
+            .catch(error => {
+                console.error('Donation error:', error);
+                document.body.removeChild(processingMsg);
+                
+                if (error.message.includes("logged in")) {
+                    if (confirm("You need to be logged in to donate. Would you like to log in now?")) {
+                        window.location.href = "{{ url_for('user.login') }}?redirect=profile";
+                    }
+                } else {
+                    alert('Error: ' + error.message);
+                }
+            });
+        };
+        
+        // Add donation details functionality
+        function viewDonationDetails(donationId) {
+            // Fetch donation details
+            fetch(`/donation-details/${donationId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.donation) {
+                        // Show details in a modal or alert
+                        const donationInfo = data.donation;
+                        alert(`Donation Details:\nTransaction ID: ${donationInfo.transaction_id || 'N/A'}\nAmount: ₹${donationInfo.amount}\nDate: ${donationInfo.date || 'N/A'}\nStatus: ${donationInfo.status || 'Completed'}`);
+                    } else {
+                        alert('Error loading donation details: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching donation details:', error);
+                    alert('Error loading donation details. Please try again later.');
+                });
+        }
+        
+        {% endif %}
+    });
+</script>
+{% endblock %} 

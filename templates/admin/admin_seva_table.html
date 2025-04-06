@@ -1,0 +1,304 @@
+{% extends "admin/admin_base.html" %} 
+{% block content %}
+
+<h1 style="color: #333;">Manage Seva</h1>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Two-column layout with fixed left column -->
+<div class="seva-container">
+    <!-- Left Column: Fixed Form -->
+    <div class="seva-form-column">
+        <!-- ✅ Add New Seva Form (Always Visible) -->
+        <div class="seva-form">
+            <h2>Add New Seva</h2>
+            <form action="{{ url_for('sevas.add_seva') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="seva_id">Seva Id:</label>
+                <input type="text" id="seva_id" name="seva_id" required>
+
+                <label for="seva_type">Seva Type:</label>
+                <select id="seva_type" name="seva_type" required class="styled-dropdown">
+                    <option value="" disabled selected>-- Select Seva Type --</option>
+                    <option value="Archanegalu">Archanegalu</option>
+                    <option value="Abhishekas">Abhishekas</option>
+                    <option value="Alankar">Alankar</option>
+                    <option value="Pooja/Vratha">Pooja/Vratha</option>
+                    <option value="Utsava">Utsava</option>
+                    <option value="Homa - Kanika">Homa - Kanika</option>
+                </select>
+
+                <label for="seva_name">Seva Name:</label>
+                <input type="text" id="seva_name" name="seva_name" required>
+
+                <label for="seva_price">Enter amount:</label> 
+                <input type="number" id="seva_price" name="seva_price" step="0.01" min="0" placeholder="0.00" required> 
+
+                <label for="seva_description">Seva Description:</label>
+                <textarea id="seva_description" name="seva_description" required></textarea>
+
+                <button type="submit">Add Seva</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Scrollable Content -->
+    <div class="seva-content-column">
+        <!-- ✅ List of Sevas -->
+        <div class="seva-list">
+            {% if sevas %}
+                {% for seva in sevas %}
+                <div class="card">
+                    <h2>Seva ID: {{ seva.seva_id }}</h2>
+                    <p><strong>Seva Name:</strong> {{ seva.seva_name }}</p>
+                    <p><strong>Type:</strong> {{ seva.seva_type }}</p>
+                    <p><strong>Price:</strong> ₹{{ seva.seva_price }}</p>
+                    <p><strong>Description:</strong> {{ seva.seva_description }}</p>
+
+                    <!-- Delete Button -->
+                    <form action="{{ url_for('sevas.delete_seva', _id=seva._id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this seva?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="delete-btn">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-data">No sevas available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Styling for the two-column layout -->
+<style>
+    /* Container for the two-column layout */
+    .seva-container {
+        display: flex;
+        gap: 30px;
+        height: calc(100vh - 200px); /* Adjust based on header height */
+        margin-top: 20px;
+    }
+    
+    /* Left column - Fixed form */
+    .seva-form-column {
+        flex: 0 0 400px; /* Increased fixed width */
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+        display: flex;
+        justify-content: center; /* Center the form */
+    }
+    
+    /* Right column - Scrollable content */
+    .seva-content-column {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 15px;
+        max-height: calc(100vh - 200px);
+    }
+    
+    /* Form styling */
+    .seva-form {
+        background: #f8f9fa;
+        padding: 20px; /* Increased padding */
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 90%; /* Set form width to 90% of container */
+    }
+    
+    .seva-form h2 {
+        color: #333;
+        margin-bottom: 15px; /* Increased margin */
+        text-align: center;
+        font-size: 20px; /* Larger font size */
+    }
+    
+    .seva-form label {
+        display: block;
+        margin-bottom: 5px; /* Increased margin */
+        font-weight: bold;
+        font-size: 14px; /* Larger font size */
+    }
+    
+    .seva-form input,
+    .seva-form textarea,
+    .styled-dropdown {
+        width: 100%;
+        padding: 8px; /* Increased padding */
+        margin-bottom: 12px; /* Increased margin */
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px; /* Fixed font size */
+    }
+    
+    .seva-form textarea {
+        height: 80px; /* Taller textarea */
+        resize: vertical;
+    }
+    
+    .seva-form button {
+        width: 100%;
+        padding: 10px; /* Increased padding */
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px; /* Larger font size */
+        transition: background-color 0.3s;
+        margin-top: 10px; /* Increased margin */
+    }
+    
+    .seva-form button:hover {
+        background-color: #0056b3;
+    }
+    
+    /* Seva list styling */
+    .seva-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        background: transparent; /* Remove the gray background */
+    }
+    
+    .card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+        width: calc(33.333% - 14px);
+        flex: 0 0 calc(33.333% - 14px);
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card h2 {
+        color: #444;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 20px;
+    }
+    
+    .card p {
+        margin: 8px 0;
+        color: #555;
+    }
+    
+    .delete-btn {
+        background-color: #dc3545;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    
+    .delete-btn:hover {
+        background-color: #c82333;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Styled Dropdown */
+    .styled-dropdown {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        color: #333;
+        cursor: pointer;
+        margin-bottom: 15px;
+        transition: border 0.3s, box-shadow 0.3s;
+    }
+
+    .styled-dropdown:focus {
+        border-color: #007bff;
+        box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+
+    .styled-dropdown:hover {
+        border-color: #555;
+    }
+    
+    /* Flash messages */
+    .flash-message {
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    
+    .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .flash-message.error, .flash-message.danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .seva-container {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .seva-form-column {
+            position: static;
+            flex: 0 0 100%;
+            margin-bottom: 20px;
+        }
+        
+        .seva-content-column {
+            max-height: none;
+            padding-right: 0;
+        }
+    }
+    
+    /* Media query for tablets */
+    @media (max-width: 992px) {
+        .card {
+            width: calc(50% - 10px);
+            flex: 0 0 calc(50% - 10px);
+        }
+    }
+    
+    /* Media query for mobile */
+    @media (max-width: 576px) {
+        .card {
+            width: 100%;
+            flex: 0 0 100%;
+        }
+    }
+</style>
+
+{% endblock %}

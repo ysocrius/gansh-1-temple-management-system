@@ -1,0 +1,802 @@
+{% extends "user/base.html" %}
+
+{% block styles %}
+<style>
+    /* Enhanced E-Hundi Variables */
+    :root {
+        --ehundi-bg: #FFF8F0;
+        --sacred-orange: #FF7F00;
+        --deep-saffron: #F9A602;
+        --sacred-gold: #D4AF37;
+        --kumkum-red: #9D2235;
+        --deep-maroon: #800020;
+        --text-dark: #333333;
+        --text-medium: #555555;
+        --text-light: #777777;
+        --border-radius-md: 8px;
+        --border-radius-lg: 12px;
+        --soft-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        --card-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        --hover-transform: translateY(-5px);
+    }
+
+    /* Background with subtle mandala pattern */
+    .e-hundi-section {
+        padding: 4rem 0;
+        background-color: var(--ehundi-bg);
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L50 100 M0 50 L100 50 M25 25 L75 75 M75 25 L25 75' stroke='%23FF7F00' stroke-width='1' fill='none' opacity='0.03'/%3E%3C/svg%3E");
+        position: relative;
+    }
+    
+    /* Add a decorative Om symbol to the top of the page */
+    .e-hundi-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 250px;
+        height: 250px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 5C25 5 5 25 5 50s20 45 45 45 45-20 45-45S75 5 50 5zm0 80c-19.33 0-35-15.67-35-35s15.67-35 35-35 35 15.67 35 35-15.67 35-35 35z' fill='%23F9A602' opacity='0.05'/%3E%3Cpath d='M57.5 20c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5-3.36-7.5-7.5-7.5z' fill='%23F9A602' opacity='0.05'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        opacity: 0.3;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .hundi-intro {
+        position: relative;
+        margin-bottom: 4rem;
+        animation: fadeIn 1.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+        color: var(--kumkum-red);
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+        display: inline-block;
+    }
+
+    .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, var(--sacred-orange), var(--sacred-gold));
+    }
+
+    .hundi-description {
+        max-width: 800px;
+        margin: 0 auto 2rem;
+        color: var(--text-medium);
+        line-height: 1.8;
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    /* Enhanced offering cards */
+    .offering-card {
+        background-color: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--soft-shadow);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        padding: 2.5rem 2rem;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(249, 166, 2, 0.1);
+    }
+
+    .offering-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, var(--sacred-orange), var(--deep-saffron));
+    }
+
+    .offering-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50 L0 50 M50 50 L100 50 M50 50 L50 0 M50 50 L50 100' stroke='%23F9A602' stroke-width='0.5' fill='none' opacity='0.05'/%3E%3C/svg%3E");
+        opacity: 0.1;
+        z-index: 0;
+    }
+
+    .offering-card:hover {
+        transform: var(--hover-transform);
+        box-shadow: var(--card-shadow);
+        border-color: rgba(249, 166, 2, 0.3);
+    }
+
+    .offering-card:hover .offering-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .offering-icon {
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        color: var(--sacred-orange);
+        position: relative;
+        z-index: 1;
+        transition: all 0.4s ease;
+    }
+
+    .offering-title {
+        color: var(--deep-saffron);
+        margin-bottom: 1rem;
+        font-weight: 600;
+        font-size: 1.5rem;
+        font-family: 'Cormorant Garamond', serif;
+        position: relative;
+        z-index: 1;
+    }
+
+    .offering-amount {
+        font-size: 1.25rem;
+        color: var(--sacred-gold);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .offering-card .btn {
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+
+    .offering-card:hover .btn-primary {
+        background-color: var(--deep-saffron);
+        border-color: var(--deep-saffron);
+        transform: translateY(-2px);
+    }
+
+    /* Enhanced QR code section */
+    .qr-code-section {
+        text-align: center;
+        padding: 3.5rem;
+        background: linear-gradient(135deg, rgba(255, 127, 0, 0.05), rgba(249, 166, 2, 0.1));
+        border-radius: var(--border-radius-lg);
+        position: relative;
+        margin-top: 4rem;
+        border: 1px solid rgba(249, 166, 2, 0.1);
+        overflow: hidden;
+    }
+
+    .qr-code-section::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        width: 120px;
+        height: 120px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' stroke='%23F9A602' stroke-width='2' fill='none' opacity='0.2'/%3E%3Ccircle cx='50' cy='50' r='35' stroke='%23F9A602' stroke-width='2' fill='none' opacity='0.15'/%3E%3Ccircle cx='50' cy='50' r='25' stroke='%23F9A602' stroke-width='2' fill='none' opacity='0.1'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        opacity: 0.5;
+        z-index: 0;
+    }
+
+    .qr-code-container {
+        position: relative;
+        display: inline-block;
+        padding: 1rem;
+        background-color: white;
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--soft-shadow);
+        margin: 1rem 0;
+        transition: all 0.4s ease;
+    }
+
+    .qr-code {
+        max-width: 220px;
+        border: none;
+        border-radius: var(--border-radius-md);
+        transition: all 0.3s ease;
+    }
+
+    .qr-code-container:hover {
+        transform: scale(1.05);
+        box-shadow: var(--card-shadow);
+    }
+
+    .qr-code-pattern {
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        right: -20px;
+        bottom: -20px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        opacity: 0.05;
+        z-index: -1;
+        border-radius: calc(var(--border-radius-lg) + 20px);
+    }
+
+    /* Enhanced step cards */
+    .step-container {
+        margin-top: 4rem;
+    }
+
+    .step-card {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        border-radius: var(--border-radius-md);
+        background-color: white;
+        box-shadow: var(--soft-shadow);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(249, 166, 2, 0.05);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .step-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--sacred-orange), var(--deep-saffron));
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .step-card:hover {
+        transform: translateX(5px);
+        box-shadow: var(--card-shadow);
+        border-color: rgba(249, 166, 2, 0.2);
+    }
+
+    .step-card:hover::after {
+        opacity: 1;
+    }
+
+    .step-number {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--sacred-orange), var(--deep-saffron));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-right: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 3px 8px rgba(249, 166, 2, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .step-card:hover .step-number {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .step-content {
+        flex-grow: 1;
+    }
+
+    .step-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--deep-saffron);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.25rem;
+    }
+
+    .step-description {
+        font-size: 1rem;
+        color: var(--text-medium);
+        margin-bottom: 0;
+        line-height: 1.6;
+    }
+
+    /* Enhanced testimonial section */
+    .testimonial-container {
+        margin-top: 5rem;
+        text-align: center;
+    }
+
+    .testimonial-card {
+        background-color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 3rem 2rem;
+        margin-top: 2rem;
+        position: relative;
+        box-shadow: var(--soft-shadow);
+        border: 1px solid rgba(249, 166, 2, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .testimonial-card:hover {
+        box-shadow: var(--card-shadow);
+        border-color: rgba(249, 166, 2, 0.2);
+    }
+
+    .testimonial-text {
+        font-style: italic;
+        color: var(--text-medium);
+        position: relative;
+        padding: 0 2.5rem;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+        line-height: 1.8;
+    }
+
+    .testimonial-text::before,
+    .testimonial-text::after {
+        content: '"';
+        font-size: 4rem;
+        font-family: 'Cormorant Garamond', serif;
+        color: var(--sacred-gold);
+        opacity: 0.3;
+        position: absolute;
+        line-height: 0.6;
+    }
+
+    .testimonial-text::before {
+        left: 0;
+        top: -0.5rem;
+    }
+
+    .testimonial-text::after {
+        right: 0;
+        bottom: -1.5rem;
+    }
+
+    .testimonial-author {
+        font-weight: 600;
+        color: var(--kumkum-red);
+        font-size: 1.1rem;
+    }
+
+    /* Enhanced FAQ section */
+    .faq-container {
+        margin-top: 5rem;
+    }
+
+    .faq-item {
+        margin-bottom: 1.25rem;
+        border: none;
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+        box-shadow: var(--soft-shadow);
+        transition: all 0.3s ease;
+    }
+
+    .faq-item:hover {
+        box-shadow: var(--card-shadow);
+    }
+
+    .faq-button {
+        padding: 1.25rem 1.5rem;
+        color: var(--text-dark);
+        background-color: white;
+        font-weight: 500;
+        border: none;
+        width: 100%;
+        text-align: left;
+        border-radius: var(--border-radius-md);
+        position: relative;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+    .faq-button:focus {
+        box-shadow: none;
+    }
+
+    .faq-button::after {
+        content: '\f107';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 1.5rem;
+        transition: all 0.3s ease;
+        color: var(--sacred-orange);
+    }
+
+    .faq-button:not(.collapsed)::after {
+        transform: rotate(180deg);
+    }
+
+    .faq-button:not(.collapsed) {
+        background: linear-gradient(135deg, var(--sacred-orange), var(--deep-saffron));
+        color: white;
+        font-weight: 600;
+    }
+
+    .faq-body {
+        padding: 1.5rem;
+        background-color: white;
+        border-top: 1px solid rgba(249, 166, 2, 0.1);
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    .accordion-body p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Enhanced button styles */
+    .btn-primary {
+        background-color: var(--sacred-orange);
+        border-color: var(--sacred-orange);
+        color: white;
+        font-weight: 600;
+        padding: 0.7rem 1.5rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 8px rgba(255, 127, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover, 
+    .btn-primary:focus {
+        background-color: var(--deep-saffron);
+        border-color: var(--deep-saffron);
+        box-shadow: 0 6px 12px rgba(255, 127, 0, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .btn-outline-primary {
+        color: var(--sacred-orange);
+        border-color: var(--sacred-orange);
+        font-weight: 600;
+        padding: 0.7rem 1.5rem;
+        border-radius: 50px;
+        background-color: transparent;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus {
+        background-color: var(--sacred-orange);
+        color: white;
+        box-shadow: 0 4px 8px rgba(255, 127, 0, 0.2);
+        transform: translateY(-2px);
+    }
+
+    /* Modal enhancements */
+    .modal-content {
+        border: none;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+    }
+
+    .modal-header {
+        border-bottom: 2px solid rgba(249, 166, 2, 0.1);
+        padding: 1.5rem;
+    }
+
+    .modal-title {
+        color: var(--deep-saffron);
+        font-weight: 600;
+        font-family: 'Cormorant Garamond', serif;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .form-label {
+        color: var(--text-dark);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        border-radius: var(--border-radius-md);
+        padding: 0.7rem 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: var(--sacred-orange);
+        box-shadow: 0 0 0 3px rgba(255, 127, 0, 0.1);
+    }
+
+    .form-text {
+        color: var(--text-light);
+        margin-top: 0.5rem;
+    }
+
+    .modal-footer {
+        border-top: 2px solid rgba(249, 166, 2, 0.1);
+        padding: 1.5rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .e-hundi-section {
+            padding: 3rem 0;
+        }
+        
+        .offering-card {
+            margin-bottom: 1.5rem;
+            padding: 2rem 1.5rem;
+        }
+        
+        .qr-code-section {
+            padding: 2rem 1rem;
+        }
+        
+        .qr-code {
+            max-width: 180px;
+        }
+        
+        .testimonial-text {
+            padding: 0 1.5rem;
+        }
+        
+        .testimonial-text::before,
+        .testimonial-text::after {
+            font-size: 3rem;
+        }
+        
+        .faq-button {
+            padding: 1rem 1.25rem;
+            font-size: 1rem;
+        }
+    }
+
+    /* Animation keyframes */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="e-hundi-section">
+    <div class="container">
+        <div class="hundi-intro text-center">
+            <h1 class="section-title">E-Hundi: Digital Offerings</h1>
+            <p class="hundi-description">Make your spiritual offerings digitally through our E-Hundi service. Your contributions help maintain temple activities, support community services, and preserve our sacred traditions.</p>
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="qr-code-section">
+            <h3 class="mb-4">Scan to Make Your Offering</h3>
+            <div class="qr-code-container">
+                <div class="qr-code-pattern"></div>
+                <img src="{{ url_for('static', filename='images/donation-qr-code.png') }}" alt="QR Code for Offerings" class="qr-code">
+            </div>
+            <p class="mt-4">Use any UPI app to scan and make your offering</p>
+            <div class="mt-3">
+                <button class="btn btn-outline-primary me-2" onclick="copyUpiId()"><i class="fas fa-copy me-1"></i> Copy UPI ID</button>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="step-container">
+            <h3 class="section-title">How to Make an E-Hundi Offering</h3>
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Select an Offering Type</h4>
+                            <p class="step-description">Choose from our various offering options based on your wishes and budget.</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Scan the QR Code</h4>
+                            <p class="step-description">Use any UPI app like Google Pay, PhonePe, or BHIM to scan the QR code.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Enter Your Details</h4>
+                            <p class="step-description">Add your name and purpose in the description field for proper acknowledgment.</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Complete Your Offering</h4>
+                            <p class="step-description">Confirm the payment to complete your spiritual offering.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testimonial -->
+        <div class="testimonial-container">
+            <h3 class="section-title">Devotee Experiences</h3>
+            <div class="testimonial-card">
+                <p class="testimonial-text">The E-Hundi service made it so convenient for me to continue my monthly offerings even when I couldn't visit the temple physically. The digital receipt and pooja confirmation gave me peace of mind.</p>
+                <p class="testimonial-author">- Ramesh Kumar, Devotee</p>
+            </div>
+        </div>
+
+        <!-- FAQs -->
+        <div class="faq-container">
+            <h3 class="section-title">Frequently Asked Questions</h3>
+            <div class="accordion" id="ehundiFaq">
+                <div class="faq-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="faq-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            How will my offering be used?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#ehundiFaq">
+                        <div class="faq-body">
+                            <p>Your offerings support various temple activities including daily poojas, maintenance of the temple, community services, and special festivals. We ensure that all contributions are used responsibly and for the purposes stated.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="faq-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Will I receive a receipt for my offering?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#ehundiFaq">
+                        <div class="faq-body">
+                            <p>Yes, a digital receipt will be sent to your email address if provided. This receipt can be used for tax deduction purposes. If you need a physical receipt, please contact our temple office with your transaction details.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="faq-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Can I make an offering for a specific festival or event?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#ehundiFaq">
+                        <div class="faq-body">
+                            <p>Absolutely! When making your offering, please mention the specific festival or event in the description field. For major festivals, we also create dedicated offering options closer to the event date.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <h2 class="accordion-header" id="headingFour">
+                        <button class="faq-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            Is my personal information kept secure?
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#ehundiFaq">
+                        <div class="faq-body">
+                            <p>We take your privacy seriously. All personal information is stored securely and is only used for processing your offering and sending receipts. We never share your information with third parties without your consent.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Offering Selection Modal -->
+<div class="modal fade" id="offeringModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Make Your Offering</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="offeringForm">
+                    <div class="mb-3">
+                        <label for="offeringType" class="form-label">Offering Type</label>
+                        <input type="text" class="form-control" id="offeringType" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="offeringAmount" class="form-label">Amount (₹)</label>
+                        <input type="number" class="form-control" id="offeringAmount" required>
+                        <div class="form-text">Enter amount in whole numbers (e.g. 101, 501)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="devoteePhone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="devoteePhone" placeholder="For receipt and confirmation">
+                    </div>
+                    <div class="mb-3">
+                        <label for="devoteeName" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="devoteeName" placeholder="Optional">
+                    </div>
+                    <div class="mb-3">
+                        <label for="devoteeEmail" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="devoteeEmail" placeholder="For digital receipt">
+                    </div>
+                    <div class="mb-3">
+                        <label for="offeringNotes" class="form-label">Special Instructions</label>
+                        <textarea class="form-control" id="offeringNotes" rows="3" placeholder="Any specific pooja requests or notes"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="proceedToPayment()">Proceed to Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedOffering = {
+        type: '',
+        minAmount: 0
+    };
+
+    function selectOffering(type, minAmount) {
+        selectedOffering.type = type;
+        selectedOffering.minAmount = minAmount;
+        
+        // Set values in the modal
+        document.getElementById('offeringType').value = type;
+        document.getElementById('offeringAmount').value = minAmount;
+        document.getElementById('offeringAmount').min = minAmount;
+        
+        // Show the modal
+        const offeringModal = new bootstrap.Modal(document.getElementById('offeringModal'));
+        offeringModal.show();
+    }
+    
+    function proceedToPayment() {
+        const amount = document.getElementById('offeringAmount').value;
+        const name = document.getElementById('devoteeName').value;
+        const phone = document.getElementById('devoteePhone').value;
+        const email = document.getElementById('devoteeEmail').value;
+        const notes = document.getElementById('offeringNotes').value;
+        
+        if (!amount || parseInt(amount) < selectedOffering.minAmount) {
+            alert(`Please enter a valid amount (minimum ₹${selectedOffering.minAmount})`);
+            return;
+        }
+        
+        // In a real implementation, you would process this data and redirect to a payment gateway
+        // For now, we'll just show a success message and close the modal
+        
+        alert(`Thank you for your offering of ₹${amount} towards ${selectedOffering.type}. You will receive a confirmation shortly.`);
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('offeringModal'));
+        modal.hide();
+        
+        // In a real implementation, you would redirect to the payment gateway or process the payment
+        // window.location.href = `/process-payment?amount=${amount}&type=${selectedOffering.type}&name=${encodeURIComponent(name)}`;
+    }
+    
+    function copyUpiId() {
+        // In a real implementation, you would copy the actual UPI ID to clipboard
+        navigator.clipboard.writeText('temple@upi')
+            .then(() => {
+                alert('UPI ID copied to clipboard: temple@upi');
+            })
+            .catch(err => {
+                alert('Could not copy UPI ID: ' + err);
+            });
+    }
+</script>
+{% endblock %}
+
+

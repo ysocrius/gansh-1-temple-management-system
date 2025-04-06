@@ -1,0 +1,681 @@
+{% extends "user/base.html" %}
+
+{% block styles %}
+<style>
+    /* Main History Page Styling */
+    .history-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                    url('{{ url_for('static', filename='images/temple_old1.jpg') }}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: white;
+        padding: 5rem 0;
+        margin-bottom: 3rem;
+        position: relative;
+    }
+    
+    .history-hero::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: linear-gradient(to top, var(--bg-cream), transparent);
+    }
+    
+    .history-title {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .history-subtitle {
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto;
+        opacity: 0.9;
+    }
+    
+    .history-section {
+        padding: 3.5rem 0;
+        background-color: var(--bg-cream);
+    }
+    
+    .section-heading {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 2.5rem;
+        color: var(--deep-saffron);
+    }
+    
+    .section-heading::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, var(--orange-gradient-start), var(--deep-gold));
+        border-radius: 50px;
+    }
+    
+    .sacred-story-card {
+        background-color: white;
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .sacred-story-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .story-image-container {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+    }
+    
+    .story-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .sacred-story-card:hover .story-image {
+        transform: scale(1.05);
+    }
+    
+    .story-content {
+        padding: 1.5rem;
+    }
+    
+    .story-title {
+        color: var(--deep-saffron);
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .story-text {
+        color: var(--text-medium);
+        line-height: 1.7;
+    }
+    
+    /* Founder Card */
+    .founder-card {
+        display: flex;
+        background: linear-gradient(135deg, #fff, #f9f5f0);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 3rem;
+    }
+    
+    .founder-image {
+        width: 40%;
+        background: url('{{ url_for('static', filename='images/temple_old2.jpg') }}');
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    
+    .founder-image::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 50px;
+        background: linear-gradient(to left, var(--bg-cream), transparent);
+    }
+    
+    .founder-content {
+        padding: 2rem;
+        width: 60%;
+    }
+    
+    .founder-title {
+        color: var(--deep-saffron);
+        margin-bottom: 1rem;
+    }
+    
+    .founder-quote {
+        font-style: italic;
+        color: var(--text-dark);
+        border-left: 3px solid var(--deep-gold);
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    /* Enhanced Timeline */
+    .timeline-container {
+        position: relative;
+        margin: 3rem 0;
+    }
+    
+    .timeline-line {
+        position: absolute;
+        left: 50%;
+        width: 4px;
+        top: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, var(--primary-orange), var(--sacred-gold));
+        transform: translateX(-50%);
+    }
+    
+    .timeline-entry {
+        position: relative;
+        margin-bottom: 4rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .timeline-entry:nth-child(odd) {
+        padding-right: 50%;
+        text-align: right;
+    }
+    
+    .timeline-entry:nth-child(even) {
+        padding-left: 50%;
+        text-align: left;
+    }
+    
+    .timeline-content {
+        background-color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        position: relative;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+        width: 80%;
+        margin-left: auto;
+        margin-right: 2rem;
+    }
+    
+    .timeline-entry:nth-child(even) .timeline-content {
+        margin-right: auto;
+        margin-left: 2rem;
+    }
+    
+    .timeline-entry:hover .timeline-content {
+        transform: translateY(-5px);
+    }
+    
+    .timeline-dot {
+        position: absolute;
+        left: 50%;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: var(--deep-gold);
+        transform: translateX(-50%);
+        border: 5px solid white;
+        box-shadow: var(--card-shadow);
+        z-index: 2;
+    }
+    
+    .timeline-year {
+        position: absolute;
+        left: 50%;
+        color: var(--deep-saffron);
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    .timeline-entry:nth-child(odd) .timeline-year {
+        transform: translateX(50px);
+    }
+    
+    .timeline-entry:nth-child(even) .timeline-year {
+        transform: translateX(calc(-100% - 50px));
+    }
+    
+    .timeline-title {
+        color: var(--deep-saffron);
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Gallery Section */
+    .gallery-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 1.5rem;
+    }
+    
+    .gallery-item {
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        position: relative;
+        box-shadow: var(--soft-shadow);
+        aspect-ratio: 4/3;
+    }
+    
+    .gallery-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .gallery-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: flex-end;
+        padding: 1.5rem;
+    }
+    
+    .gallery-caption {
+        color: white;
+        margin: 0;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+    
+    .gallery-item:hover .gallery-image {
+        transform: scale(1.1);
+    }
+    
+    .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+    }
+    
+    .gallery-item:hover .gallery-caption {
+        transform: translateY(0);
+    }
+    
+    /* Cultural Significance Section */
+    .culture-card {
+        position: relative;
+        background-color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--soft-shadow);
+        transition: all 0.3s ease;
+        border-left: 5px solid var(--deep-saffron);
+    }
+    
+    .culture-card:hover {
+        transform: translateX(5px);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .culture-icon {
+        color: var(--deep-gold);
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .culture-title {
+        color: var(--deep-saffron);
+        margin-bottom: 1rem;
+    }
+    
+    /* Interactive Elements */
+    .fact-box {
+        background: linear-gradient(135deg, var(--orange-gradient-start), var(--orange-gradient-end));
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-top: 3rem;
+    }
+    
+    .fact-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('{{ url_for('static', filename='images/logo.png') }}');
+        background-repeat: no-repeat;
+        background-position: right -50px bottom -50px;
+        background-size: 200px;
+        opacity: 0.1;
+    }
+    
+    .fact-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .fact-list {
+        padding-left: 1.5rem;
+    }
+    
+    .fact-list li {
+        margin-bottom: 0.75rem;
+        position: relative;
+    }
+    
+    .fact-list li::before {
+        content: '\f0da';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        left: -1.2rem;
+        color: rgba(255,255,255,0.8);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 991px) {
+        .founder-card {
+            flex-direction: column;
+        }
+        
+        .founder-image, .founder-content {
+            width: 100%;
+        }
+        
+        .founder-image {
+            height: 300px;
+        }
+        
+        .founder-image::after {
+            display: none;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .timeline-line {
+            left: 40px;
+        }
+        
+        .timeline-entry {
+            padding-left: 80px !important;
+            padding-right: 0 !important;
+            text-align: left !important;
+        }
+        
+        .timeline-dot {
+            left: 40px;
+        }
+        
+        .timeline-content {
+            width: 100%;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        
+        .timeline-year {
+            left: 40px;
+            transform: translateX(calc(-50% + 12px)) !important;
+            top: -40px;
+        }
+        
+        .gallery-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .history-title {
+            font-size: 2rem;
+        }
+        
+        .gallery-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="history-hero">
+    <div class="container text-center">
+        <h1 class="history-title">History of Shri Veeranjaneya Swamy Temple</h1>
+        <p class="history-subtitle">A journey through time, tradition, and spiritual heritage</p>
+    </div>
+</section>
+
+<!-- Main Content Section -->
+<section class="history-section">
+    <div class="container">
+        <!-- Sacred Beginning -->
+        <div class="text-center mb-5">
+            <h2 class="section-heading">Our Sacred Beginning</h2>
+            <p class="lead mb-4">
+                Founded in the early 19th century, Shri Veeranjaneya Swamy Temple stands as a testament to devotion and spiritual heritage.
+            </p>
+            <p class="text-muted mb-5">
+                The temple was established with the divine vision of providing a spiritual sanctuary for devotees of Lord Hanuman.
+                Over the years, it has grown from a small shrine to a significant spiritual center, serving thousands of devotees
+                and preserving ancient traditions.
+            </p>
+        </div>
+        
+        <!-- Founder's Story -->
+        <div class="founder-card mb-5">
+            <div class="founder-image"></div>
+            <div class="founder-content">
+                <h3 class="founder-title">The Founding Vision</h3>
+                <p>The temple was established by Shri Ramachandracharya, a devoted spiritual leader who had a divine vision to create a sacred space dedicated to Lord Hanuman. His unwavering faith and commitment led to the establishment of what would become one of the region's most significant spiritual centers.</p>
+                <div class="founder-quote">
+                    "A temple is not merely a structure of stone and mortar; it is a living embodiment of our spiritual traditions and a bridge between the mortal and the divine."
+                </div>
+                <p class="mb-0">His vision continues to guide our temple's mission and values to this day, emphasizing devotion, service, and spiritual growth.</p>
+            </div>
+        </div>
+        
+        <!-- Historical Timeline -->
+        <div class="text-center mb-4">
+            <h2 class="section-heading">Through the Ages: Our Journey</h2>
+        </div>
+        
+        <div class="timeline-container">
+            <div class="timeline-line"></div>
+            
+            <div class="timeline-entry">
+                <div class="timeline-dot"></div>
+                <div class="timeline-year">1825</div>
+                <div class="timeline-content">
+                    <h4 class="timeline-title">Temple Foundation</h4>
+                    <p>The initial shrine was established by a small group of devoted followers of Lord Hanuman. The simple structure became a focal point for local devotees seeking spiritual guidance and blessings.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-entry">
+                <div class="timeline-dot"></div>
+                <div class="timeline-year">1850</div>
+                <div class="timeline-content">
+                    <h4 class="timeline-title">Main Temple Construction</h4>
+                    <p>Construction of the main temple structure began, incorporating traditional architectural elements. Master craftsmen were brought in to create detailed sculptures and intricate designs that would enhance the spiritual atmosphere.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-entry">
+                <div class="timeline-dot"></div>
+                <div class="timeline-year">1900</div>
+                <div class="timeline-content">
+                    <h4 class="timeline-title">Major Renovation</h4>
+                    <p>The first major renovation expanded the temple complex to accommodate the growing number of devotees. Additional shrines were added, and the main sanctum was enhanced with gold-plated elements.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-entry">
+                <div class="timeline-dot"></div>
+                <div class="timeline-year">1950</div>
+                <div class="timeline-content">
+                    <h4 class="timeline-title">Golden Era</h4>
+                    <p>Introduction of daily sevas and cultural programs marked the beginning of what many consider the temple's golden era. Regular religious discourses and music performances attracted devotees from distant regions.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-entry">
+                <div class="timeline-dot"></div>
+                <div class="timeline-year">2000</div>
+                <div class="timeline-content">
+                    <h4 class="timeline-title">Modern Development</h4>
+                    <p>The temple underwent modernization while carefully preserving its traditional values and architectural integrity. New facilities were added to enhance the devotee experience while maintaining the sacred atmosphere.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-entry">
+                <div class="timeline-dot"></div>
+                <div class="timeline-year">Today</div>
+                <div class="timeline-content">
+                    <h4 class="timeline-title">A Living Legacy</h4>
+                    <p>Today, the temple continues to thrive as a spiritual center, seamlessly blending ancient traditions with modern practices. It serves as both a place of worship and a cultural landmark preserving our heritage.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historical Photo Gallery -->
+        <div class="my-5 pt-3">
+            <div class="text-center mb-4">
+                <h2 class="section-heading">Temple Through Time</h2>
+                <p class="text-muted mb-4">Explore the visual journey of our temple's evolution over the centuries</p>
+            </div>
+            
+            <div class="gallery-container">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/temple_old1.jpg') }}" alt="Temple in 1900s" class="gallery-image">
+                    <div class="gallery-overlay">
+                        <h5 class="gallery-caption">Temple in the 1900s</h5>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/temple_old2.jpg') }}" alt="First Renovation" class="gallery-image">
+                    <div class="gallery-overlay">
+                        <h5 class="gallery-caption">First Major Renovation</h5>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/temple_present.jpg') }}" alt="Present Day Temple" class="gallery-image">
+                    <div class="gallery-overlay">
+                        <h5 class="gallery-caption">Present Day Temple</h5>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/temple_old1.jpg') }}" alt="Temple Festivals" class="gallery-image">
+                    <div class="gallery-overlay">
+                        <h5 class="gallery-caption">Historical Festival Celebrations</h5>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/temple_old2.jpg') }}" alt="Temple Artifacts" class="gallery-image">
+                    <div class="gallery-overlay">
+                        <h5 class="gallery-caption">Ancient Temple Artifacts</h5>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/temple_present.jpg') }}" alt="Temple Community" class="gallery-image">
+                    <div class="gallery-overlay">
+                        <h5 class="gallery-caption">Our Growing Spiritual Community</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cultural Significance -->
+        <div class="my-5 pt-3">
+            <div class="text-center mb-4">
+                <h2 class="section-heading">Cultural & Spiritual Significance</h2>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="culture-card">
+                        <div class="culture-icon">
+                            <i class="fas fa-landmark"></i>
+                        </div>
+                        <h4 class="culture-title">Architectural Marvel</h4>
+                        <p class="mb-0">The temple's architecture reflects traditional South Indian temple design, featuring intricate carvings and symbolic elements that tell stories from ancient scriptures, blending aesthetics with spiritual symbolism.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="culture-card">
+                        <div class="culture-icon">
+                            <i class="fas fa-om"></i>
+                        </div>
+                        <h4 class="culture-title">Spiritual Practices</h4>
+                        <p class="mb-0">The temple maintains age-old traditions of worship while adapting to contemporary needs, ensuring the preservation of sacred rituals for future generations through authentic spiritual practices.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="culture-card">
+                        <div class="culture-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h4 class="culture-title">Community Center</h4>
+                        <p class="mb-0">Beyond religious services, the temple serves as a cultural hub, hosting festivals, educational programs, and community services that bring people together in celebration of shared spiritual values.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="culture-card">
+                        <div class="culture-icon">
+                            <i class="fas fa-scroll"></i>
+                        </div>
+                        <h4 class="culture-title">Heritage Preservation</h4>
+                        <p class="mb-0">Dedicated to preserving religious artifacts, ancient manuscripts, and traditional art forms associated with temple culture, ensuring that these treasures remain accessible for future generations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Interesting Facts Box -->
+        <div class="fact-box">
+            <div class="fact-pattern"></div>
+            <h3 class="fact-title">Did You Know?</h3>
+            <ul class="fact-list">
+                <li>The main idol was carved from a single block of stone transported from over 100 miles away</li>
+                <li>The temple has withstood three major natural calamities without significant damage</li>
+                <li>Over 10,000 oil lamps are lit during the annual festival celebration</li>
+                <li>The sacred bell at the entrance was gifted by devotees over 150 years ago</li>
+                <li>The temple kitchen serves free meals to over 500 people daily</li>
+            </ul>
+        </div>
+        
+        <!-- Visit Call to Action -->
+        <div class="text-center mt-5">
+            <h3 class="mb-4">Visit Our Temple and Experience Its Living Heritage</h3>
+            <a href="#" class="btn btn-primary btn-lg">Plan Your Visit</a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add animations when elements come into view
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate timeline entries on scroll
+        const timelineEntries = document.querySelectorAll('.timeline-entry');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        timelineEntries.forEach(item => {
+            item.style.opacity = 0;
+            item.style.transform = 'translateY(20px)';
+            item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(item);
+        });
+    });
+</script>
+{% endblock %}
+

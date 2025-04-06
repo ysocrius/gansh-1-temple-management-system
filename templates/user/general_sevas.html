@@ -1,0 +1,562 @@
+{% extends "user/base.html" %}
+
+{% block styles %}
+<style>
+    /* Sevas Page Styling */
+    .sevas-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                    url('{{ url_for('static', filename='images/temple_present.jpg') }}');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 6rem 0;
+        text-align: center;
+        position: relative;
+    }
+    
+    .sevas-hero::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: linear-gradient(to top, var(--bg-cream), transparent);
+    }
+    
+    .sevas-hero-content {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 800px;
+        margin: 0 auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .sevas-title {
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    
+    .sevas-subtitle {
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto 2rem;
+        line-height: 1.6;
+        letter-spacing: 0.5px;
+    }
+    
+    .sevas-content {
+        background-color: var(--bg-cream);
+        padding: 4rem 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    .filter-container {
+        background: linear-gradient(135deg, #fff, #f8f5f0);
+        padding: 1.5rem 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        margin-bottom: 3rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        border-left: 5px solid var(--deep-saffron);
+    }
+    
+    .filter-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-right: 0.5rem;
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+    }
+    
+    .filter-label i {
+        color: var(--deep-saffron);
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .filter-select {
+        padding: 0.75rem 1.5rem;
+        border: 2px solid var(--border-light);
+        border-radius: 0.75rem;
+        outline: none;
+        flex-grow: 1;
+        max-width: 300px;
+        color: var(--text-dark);
+        background-color: white;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+    }
+    
+    .filter-select:focus, .filter-select:hover {
+        border-color: var(--primary-orange);
+        box-shadow: 0 0 0 3px rgba(var(--primary-orange-rgb), 0.15);
+    }
+    
+    .seva-count {
+        margin-left: auto;
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+        background: linear-gradient(135deg, var(--orange-gradient-start), var(--orange-gradient-end));
+        color: white;
+        border-radius: 2rem;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(var(--primary-orange-rgb), 0.3);
+    }
+    
+    /* Sevas Grid - Updated to match donations page */
+    .sevas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 2.5rem;
+    }
+    
+    .seva-card {
+        background-color: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        transition: all 0.4s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        transform-origin: center bottom;
+    }
+    
+    .seva-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        z-index: 1;
+    }
+    
+    /* Seva card styling - matching donations page */
+    .seva-type-badge {
+        position: absolute;
+        top: 1.2rem;
+        right: 1.2rem;
+        padding: 0.4rem 1rem;
+        background-color: rgba(255, 127, 0, 0.1);
+        color: #FF7F00;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 2rem;
+        z-index: 1;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .seva-icon-wrapper {
+        position: relative;
+        height: 120px;
+        background: linear-gradient(135deg, #FF7F00, #FF9033);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+    
+    .seva-icon-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        opacity: 0.5;
+    }
+    
+    .seva-icon {
+        width: 75px;
+        height: 75px;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+    }
+    
+    .seva-icon i {
+        font-size: 2.2rem;
+        color: #FF7F00;
+    }
+    
+    .seva-content {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    
+    .seva-name {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 0.75rem;
+        line-height: 1.2;
+    }
+    
+    .seva-price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #FF7F00;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .seva-info {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .seva-info i {
+        font-size: 1rem;
+        color: #999;
+    }
+    
+    .seva-tooltip {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100%);
+        background-color: #333;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+    
+    .seva-info:hover .seva-tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .seva-description {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+    
+    .seva-benefits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .seva-benefit-tag {
+        background-color: rgba(255, 127, 0, 0.08);
+        color: #FF7F00;
+        padding: 0.4rem 0.8rem;
+        border-radius: 2rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    
+    .seva-benefit-tag i {
+        font-size: 0.9rem;
+    }
+    
+    .book-seva-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #2575fc, #6a11cb);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 10px rgba(37, 117, 252, 0.3);
+        margin-top: auto;
+    }
+    
+    .book-seva-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
+    }
+    
+    .book-seva-btn i {
+        font-size: 1.2rem;
+    }
+    
+    /* Animation for seva cards */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .seva-card {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+    
+    /* No Sevas Found Styling */
+    .no-sevas {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+    
+    .no-sevas i {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 1.5rem;
+    }
+    
+    .no-sevas h3 {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+    
+    .no-sevas p {
+        color: #777;
+        max-width: 500px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    
+    /* Section Heading Styles from donations page */
+    .section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid rgba(255, 127, 0, 0.1);
+        padding-bottom: 0.75rem;
+    }
+    
+    .seva-section-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #333;
+        position: relative;
+        padding-left: 1rem;
+    }
+    
+    .seva-section-title::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 10%;
+        height: 80%;
+        width: 4px;
+        background: linear-gradient(to bottom, #FF7F00, #FF9033);
+        border-radius: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="sevas-hero">
+    <div class="container">
+        <div class="sevas-hero-content">
+            <h1 class="sevas-title">Temple Sevas</h1>
+            <p class="sevas-subtitle">Discover the sacred rituals and offerings that deepen your spiritual connection and bestow divine blessings</p>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content Section -->
+<section class="sevas-content">
+    <div class="container">
+        <!-- Section heading from donations page -->
+        <div class="section-heading mb-4">
+            <h3 class="seva-section-title">Available Sevas</h3>
+        </div>
+        
+        <!-- Filter Section -->
+        <div class="filter-container">
+            <div class="filter-label">
+                <i class="fas fa-filter"></i>
+                Filter by Seva Type:
+            </div>
+            <select id="sevaType" onchange="filterSevas()" class="filter-select">
+                <option value="all">All Sevas</option>
+                <option value="Archanegalu">Archanegalu</option>
+                <option value="Abhishekas">Abhishekas</option>
+                <option value="Alankar">Alankar</option>
+                <option value="Pooja/Vratha">Pooja/Vratha</option>
+                <option value="Utsava">Utsava</option>
+                <option value="Homa - Kanika">Homa - Kanika</option>
+            </select>
+            
+            <div class="seva-count">{{ sevas|length }} sevas found</div>
+            
+        </div>
+        
+        <!-- Sevas Grid -->
+        {% if sevas %}
+        <div class="sevas-grid">
+            {% for seva in sevas %}
+            <div class="seva-card">
+                <div class="seva-type-badge">{{ seva.seva_type }}</div>
+                <div class="seva-icon-wrapper">
+                    <div class="seva-icon-pattern"></div>
+                    <div class="seva-icon">
+                        {% if seva.seva_type == "Archanegalu" %}
+                            <i class="fas fa-pray"></i>
+                        {% elif seva.seva_type == "Abhishekas" %}
+                            <i class="fas fa-water"></i>
+                        {% elif seva.seva_type == "Alankar" %}
+                            <i class="fas fa-gem"></i>
+                        {% elif seva.seva_type == "Pooja/Vratha" %}
+                            <i class="fas fa-hands"></i>
+                        {% elif seva.seva_type == "Utsava" %}
+                            <i class="fas fa-gopuram"></i>
+                        {% elif seva.seva_type == "Homa - Kanika" %}
+                            <i class="fas fa-fire"></i>
+                        {% else %}
+                            <i class="fas fa-om"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="seva-content">
+                    <h3 class="seva-name">{{ seva.seva_name }}</h3>
+                    <div class="seva-price">
+                        ₹{{ seva.seva_price }}
+                        <span class="seva-info">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="seva-tooltip">One-time offering amount</span>
+                        </span>
+                    </div>
+                    <p class="seva-description">{{ seva.seva_description }}</p>
+                    
+                    <div class="seva-benefits">
+                        {% if "Archa" in seva.seva_type or "Pooja" in seva.seva_type %}
+                        <span class="seva-benefit-tag"><i class="fas fa-leaf"></i> Prasadam</span>
+                        {% endif %}
+                        {% if "Abhishekas" in seva.seva_type %}
+                        <span class="seva-benefit-tag"><i class="fas fa-certificate"></i> Certificate</span>
+                        {% endif %}
+                        {% if seva.seva_price|int > 500 %}
+                        <span class="seva-benefit-tag"><i class="fas fa-camera"></i> Photos</span>
+                        {% endif %}
+                        {% if "Utsava" in seva.seva_type %}
+                        <span class="seva-benefit-tag"><i class="fas fa-users"></i> Family</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Book Seva Button -->
+                    <a href="{{ url_for('seva.confirm_order', seva_id=seva._id) }}" class="book-seva-btn">
+                        <i class="fas fa-calendar-plus"></i>
+                        Book This Seva
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-sevas">
+            <i class="fas fa-search"></i>
+            <h3>No Sevas Found</h3>
+            <p>There are no sevas available for the selected type. Please try another category or check back later for updates.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterSevas() {
+    var selectedType = document.getElementById("sevaType").value;
+    var sevaCards = document.querySelectorAll('.seva-card');
+    var visibleCount = 0;
+    
+    // Client-side filtering
+    sevaCards.forEach(function(card) {
+        var sevaType = card.querySelector('.seva-type-badge').innerText;
+        
+        if (selectedType === 'all' || sevaType === selectedType) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Update the counter
+    var sevaCountElement = document.querySelector('.seva-count');
+    if (sevaCountElement) {
+        sevaCountElement.innerText = visibleCount + ' sevas found';
+    }
+    
+    // Log to console for debugging
+    console.log('Client-side filter applied:', selectedType, 'Visible sevas:', visibleCount);
+    
+    return false; // Prevent form submission
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial count update
+    var sevaCards = document.querySelectorAll('.seva-card');
+    var sevaCountElement = document.querySelector('.seva-count');
+    if (sevaCountElement) {
+        sevaCountElement.innerText = sevaCards.length + ' sevas found';
+    }
+    
+    // Apply filter if there's a selected type in the URL
+    var urlParams = new URLSearchParams(window.location.search);
+    var typeParam = urlParams.get('type');
+    if (typeParam) {
+        var sevaTypeSelect = document.getElementById('sevaType');
+        if (sevaTypeSelect) {
+            sevaTypeSelect.value = typeParam;
+            filterSevas(); // Apply the filter
+        }
+    }
+    
+    // Add staggered animation delay to each card
+    var sevaCards = document.querySelectorAll('.seva-card');
+    sevaCards.forEach(function(card, index) {
+        card.style.animationDelay = (index * 0.1) + 's';
+    });
+});
+</script>
+{% endblock %} 

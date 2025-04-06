@@ -1,0 +1,197 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Manage Testimonials{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="color: #333;">Manage Testimonials</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="testimonial-list">
+        {% for testimonial in testimonials %}
+        <div class="card">
+            <h2><strong>User:</strong> {{ testimonial.user_name }}</h2>
+            <p><strong>Rating:</strong> {{ testimonial.rating }}/5</p>
+            <p><strong>Date:</strong> {{ testimonial.date_submitted.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p><strong>Message:</strong> {{ testimonial.message }}</p>
+            <p><strong>Status:</strong> 
+                <span class="badge {% if testimonial.status == 'approved' %}success{% elif testimonial.status == 'rejected' %}error{% else %}warning{% endif %}">
+                    {{ testimonial.status|title }}
+                </span>
+            </p>
+            {% if testimonial.status == 'pending' %}
+            <div class="action-buttons">
+                <form method="POST" action="{{ url_for('general_admin.approve_testimonial', testimonial_id=testimonial._id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="approve-btn">Approve</button>
+                </form>
+                <form method="POST" action="{{ url_for('general_admin.reject_testimonial', testimonial_id=testimonial._id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="reject-btn">Reject</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="card">
+            <p class="no-data">No testimonials found.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* Container Styles */
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Flash Messages */
+    .flash-message {
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+
+    .flash-message.success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .flash-message.error {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .flash-message.warning {
+        background-color: #ffc107;
+        color: #333;
+    }
+
+    /* Testimonial List */
+    .testimonial-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    /* Card Design */
+    .card {
+        background: #fff;
+        padding: 20px;
+        width: 320px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+    }
+
+    .card h2 {
+        font-size: 20px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .card p {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 8px;
+    }
+
+    /* Badge Styles */
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .badge.success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .badge.error {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .badge.warning {
+        background-color: #ffc107;
+        color: #333;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .approve-btn, .reject-btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.2s ease-in-out;
+        color: white;
+        font-weight: bold;
+    }
+
+    .approve-btn {
+        background-color: #28a745;
+    }
+
+    .reject-btn {
+        background-color: #dc3545;
+    }
+
+    .approve-btn:hover {
+        background-color: #218838;
+    }
+
+    .reject-btn:hover {
+        background-color: #c82333;
+    }
+
+    /* No Data Message */
+    .no-data {
+        color: #888;
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .testimonial-list {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 320px;
+        }
+    }
+</style>
+{% endblock %} 

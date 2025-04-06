@@ -1,0 +1,230 @@
+{% extends "user/base.html" %}
+
+{% block title %}Register - Temple Management System{% endblock %}
+
+{% block styles %}
+<style>
+.auth-container {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--primary-color, #FF7E1D);
+}
+
+.auth-header h2 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.auth-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.auth-form input:focus {
+    border-color: var(--primary-color, #FF7E1D);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 126, 29, 0.1);
+}
+
+.auth-btn {
+    display: block;
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(to right, var(--orange-gradient-start, #FF7E1D), var(--orange-gradient-end, #FFAA6C));
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.auth-btn:hover {
+    background: linear-gradient(to right, var(--orange-gradient-end, #FFAA6C), var(--orange-gradient-start, #FF7E1D));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 126, 29, 0.2);
+}
+
+.auth-links {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.auth-links a {
+    color: var(--primary-color, #FF7E1D);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+}
+
+.divider span {
+    padding: 0 10px;
+    color: #777;
+    font-size: 0.8rem;
+}
+
+.auth-alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 5px;
+    color: white;
+}
+
+.auth-alert.success {
+    background-color: #28a745;
+}
+
+.auth-alert.danger {
+    background-color: #dc3545;
+}
+
+.auth-alert.warning {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.auth-alert.info {
+    background-color: #17a2b8;
+}
+
+.password-requirements {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.password-requirements ul {
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.password-requirements li {
+    margin-bottom: 0.2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-header">
+        <h2>Create Account</h2>
+        <p>Join our temple community</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="auth-alert {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="auth-form" id="registerForm">
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required placeholder="Enter your full name">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="Enter your email">
+        </div>
+
+        <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" required placeholder="Enter your phone number">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Create a password" minlength="8">
+            <div class="password-requirements">
+                Password should:
+                <ul>
+                    <li>Be at least 8 characters long</li>
+                    <li>Include at least one uppercase letter</li>
+                    <li>Include at least one number</li>
+                </ul>
+            </div>
+        </div>
+
+        <button type="submit" class="auth-btn">Register</button>
+    </form>
+
+    <div class="divider">
+        <span>OR</span>
+    </div>
+
+    <div class="auth-links">
+        <p>Already have an account? <a href="{{ url_for('user.login') }}">Login here</a></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('registerForm');
+        
+        form.addEventListener('submit', function(event) {
+            const password = document.getElementById('password').value;
+            const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+            
+            if (!passwordRegex.test(password)) {
+                event.preventDefault();
+                alert('Password must be at least 8 characters long, include at least one uppercase letter and one number.');
+            }
+        });
+    });
+</script>
+{% endblock %}

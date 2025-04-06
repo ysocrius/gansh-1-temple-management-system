@@ -1,0 +1,225 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Temple Events{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="page-header text-center mb-5">
+        <h1>Temple Events</h1>
+        <p class="lead">Stay updated with our upcoming events and celebrations</p>
+        <div class="divider-line"><span><i class="fas fa-om"></i></span></div>
+    </div>
+
+    <!-- Upcoming Events Section -->
+    <section class="upcoming-events mb-5">
+        <h2 class="section-title text-center mb-4">Upcoming Events</h2>
+        
+        {% if upcoming_events %}
+            <div class="row">
+                {% for event in upcoming_events %}
+                <div class="col-md-4 mb-4">
+                    <div class="event-card">
+                        <div class="event-date">
+                            <span class="day">{{ event.date.strftime('%d') }}</span>
+                            <span class="month">{{ event.date.strftime('%b') }}</span>
+                        </div>
+                        <div class="event-details">
+                            <h3 class="event-title">{{ event.title }}</h3>
+                            <p class="event-venue"><i class="fas fa-map-marker-alt"></i> {{ event.venue }}</p>
+                            <p class="event-description">{{ event.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">
+                <p>No upcoming events scheduled at this time. Please check back later!</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Past Events Section -->
+    <section class="past-events">
+        <h2 class="section-title text-center mb-4">Recent Events</h2>
+        
+        {% if past_events %}
+            <div class="row">
+                {% for event in past_events %}
+                <div class="col-md-4 mb-4">
+                    <div class="event-card past">
+                        <div class="event-date past">
+                            <span class="day">{{ event.date.strftime('%d') }}</span>
+                            <span class="month">{{ event.date.strftime('%b') }}</span>
+                        </div>
+                        <div class="event-details">
+                            <h3 class="event-title">{{ event.title }}</h3>
+                            <p class="event-venue"><i class="fas fa-map-marker-alt"></i> {{ event.venue }}</p>
+                            <p class="event-description">{{ event.description }}</p>
+                            <div class="event-completed">
+                                <span><i class="fas fa-check-circle"></i> Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-secondary text-center">
+                <p>No recent events to display.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+    .divider-line {
+        position: relative;
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .divider-line:before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(to right, transparent, var(--sacred-gold), transparent);
+    }
+    
+    .divider-line span {
+        position: relative;
+        display: inline-block;
+        padding: 0 15px;
+        background: var(--bg-color);
+        color: var(--sacred-gold);
+        font-size: 1.2rem;
+    }
+    
+    .event-card {
+        display: flex;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+        position: relative;
+    }
+    
+    .event-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .event-date {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #FF8C00, #FFA500);
+        color: white;
+        padding: 15px;
+        width: 85px;
+        min-width: 85px;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        font-weight: bold;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .event-date.past {
+        background: linear-gradient(135deg, #757575, #424242);
+    }
+    
+    .event-date .day {
+        font-size: 2rem;
+        font-weight: bold;
+        line-height: 1;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .event-date .month {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: block;
+    }
+    
+    .event-details {
+        padding: 20px;
+        flex: 1;
+    }
+    
+    .event-title {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: var(--text-color);
+    }
+    
+    .event-venue {
+        color: #666;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .event-description {
+        color: #777;
+        font-size: 0.95rem;
+    }
+    
+    .event-completed {
+        margin-top: 15px;
+        color: #888;
+        font-size: 0.9rem;
+    }
+    
+    .event-completed i {
+        color: #4CAF50;
+    }
+    
+    .section-title {
+        color: var(--text-color);
+        position: relative;
+        display: inline-block;
+        padding-bottom: 10px;
+    }
+    
+    .section-title:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background: var(--sacred-gold);
+        border-radius: 2px;
+    }
+    
+    /* Ensure the event date is visible */
+    @media (max-width: 767px) {
+        .event-card {
+            flex-direction: column;
+        }
+        
+        .event-date {
+            width: 100%;
+            min-height: 80px;
+            flex-direction: row;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .event-date .day,
+        .event-date .month {
+            display: inline-block;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,2729 @@
+{% extends "user/base.html" %}
+
+{% block title %}Donations - Temple Management System{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style>
+        /* Donation page styles */
+        .donation-card {
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            border: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .donation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 1rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .donation-amount {
+            font-size: 2rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .donation-description {
+            margin-bottom: 1.5rem;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .donation-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .donor-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        /* Donation Table */
+        .donations-table {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .donation-row {
+            transition: background-color 0.2s ease;
+        }
+        
+        .donation-row:hover {
+            background-color: rgba(255, 127, 0, 0.05);
+        }
+        
+        .donation-badge {
+            display: inline-block;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .recurring-badge {
+            background-color: #0d6efd;
+        }
+        
+        .type-general {
+            background-color: #6c757d;
+        }
+        
+        .type-construction {
+            background-color: #fd7e14;
+        }
+        
+        .type-pooja {
+            background-color: #198754;
+        }
+        
+        .type-festival {
+            background-color: #6f42c1;
+        }
+        
+        .status-completed {
+            background-color: #198754;
+        }
+        
+        .status-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .status-failed {
+            background-color: #dc3545;
+        }
+        
+        /* Success modal styling */
+        .thank-you-heading {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        .bg-orange {
+            background-color: var(--primary-color);
+        }
+        
+        .text-orange {
+            color: var(--primary-color);
+        }
+        
+        /* Donation statistics */
+        .stat-card {
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            height: 100%;
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Donation form */
+        .donation-form {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 127, 0, 0.25);
+        }
+        
+        /* Recent Donors */
+        .donor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .donor-name {
+            font-weight: 600;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Temple Donations</h2>
+    
+    <!-- Donation Goals Progress -->
+    <div class="row mb-5">
+        <div class="col-12">
+            {% if donation_goals %}
+                <h3 class="mb-4">Donation Goals</h3>
+                <div class="row">
+                    {% for goal in donation_goals %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ goal.title }}</h5>
+                                <div class="progress mb-3">
+                                    <div class="progress-bar {% if goal.color %}bg-{{ goal.color }}{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ (goal.current / goal.goal * 100)|int }}%;" 
+                                         aria-valuenow="{{ (goal.current / goal.goal * 100)|int }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ (goal.current / goal.goal * 100)|int }}%
+                                    </div>
+                                </div>
+                                <p class="card-text">
+                                    <span class="text-{% if goal.color %}{{ goal.color }}{% else %}primary{% endif %}">₹{{ "{:,}".format(goal.current|int) }}</span> 
+                                    raised of ₹{{ "{:,}".format(goal.goal|int) }} goal
+                                </p>
+                                <button class="btn btn-outline-{% if goal.color %}{{ goal.color }}{% else %}primary{% endif %} btn-sm" 
+                                        onclick="quickDonate('{{ goal.title }}')">
+                                    Contribute
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Support Our Temple</h4>
+                        <p class="card-text">Your generous donations help us maintain our temple and support community activities.</p>
+                        <p class="card-text">Choose from any of the donation options below.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Available Donations -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">Available Donations</h3>
+            <div class="row">
+                {% for donation in donation_types %}
+                <div class="col-md-4 mb-4">
+                    <div class="seva-card" style="opacity: 1; transform: translateY(0px); transition: opacity 0.5s, transform 0.5s;">
+                        <div class="seva-type-badge">{{ donation.get('type', 'Donation') }}</div>
+                        <div class="seva-icon-wrapper">
+                            <div class="seva-icon-pattern"></div>
+                            <div class="seva-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                        </div>
+                        <div class="seva-content">
+                            <h3 class="seva-name">{{ donation.name }}</h3>
+                            <div class="seva-price">
+                                ₹{{ donation.get('min_amount', 100) }}
+                                <span class="seva-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span class="seva-tooltip">Minimum donation amount</span>
+                                </span>
+                            </div>
+                            <p class="seva-description">{{ donation.description }}</p>
+                            
+                            <div class="custom-donation mb-3">
+                                <label class="form-label">Enter Amount (₹)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" 
+                                           min="{{ donation.get('min_amount', 100) }}"
+                                           value="{{ donation.get('min_amount', 100) }}"
+                                           id="amount_{{ donation.id }}">
+                                </div>
+                            </div>
+                            <div class="quick-amounts mb-3">
+                                <button class="btn btn-outline-secondary btn-sm me-2" 
+                                        data-donation-id="{{ donation.id }}"
+                                        data-amount="{{ donation.get('min_amount', 100) }}"
+                                        onclick="setAmountFromButton(this)">
+                                    ₹{{ donation.get('min_amount', 100) }}
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm me-2" 
+                                        data-donation-id="{{ donation.id }}"
+                                        data-amount="{{ donation.get('min_amount', 100) * 2 }}"
+                                        onclick="setAmountFromButton(this)">
+                                    ₹{{ donation.get('min_amount', 100) * 2 }}
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" 
+                                        data-donation-id="{{ donation.id }}"
+                                        data-amount="{{ donation.get('min_amount', 100) * 5 }}"
+                                        onclick="setAmountFromButton(this)">
+                                    ₹{{ donation.get('min_amount', 100) * 5 }}
+                                </button>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="anonymous_{{ donation.id }}">
+                                <label class="form-check-label" for="anonymous_{{ donation.id }}">
+                                    Donate anonymously
+                                </label>
+                            </div>
+                            
+                            <button class="book-seva-btn" 
+                                    onclick="processDonation('{{ donation.id }}')">
+                                <i class="fas fa-heart"></i>
+                                Donate Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Donations with Real-time Updates -->
+    <div class="row">
+        <div class="col-12">
+            <div class="section-heading mb-4">
+                <h3 class="seva-section-title">Recent Donations</h3>
+                <!-- Removed Total Donors counter -->
+                </div>
+            <div class="recent-donations-container">
+                <table class="donation-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Donor Name</th>
+                            <th>Donation</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <!-- Actions column removed -->
+    </tr>
+                    </thead>
+                    <tbody id="recentDonationsTable">
+                        {% for donation in recent_donations %}
+                        <tr class="donation-row">
+                            <td class="donation-date">
+                                {% if donation.date %}
+                                    {{ donation.date.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="donation-donor">
+                                {% if donation.is_anonymous == True %}
+                                    <em>Anonymous</em>
+                                {% elif donation.donor_name == 'Anonymous' and donation.get('is_anonymous') != False %}
+                                    <em>Anonymous</em>
+                                {% else %}
+                                    <span class="donor-name">{{ donation.donor_name }}</span>
+                                    {% if donation.is_recurring %}
+                                        <span class="donation-badge recurring-badge">Monthly</span>
+                                    {% endif %}
+                                {% endif %}
+                                <!-- Debug info (hidden) -->
+                                {% if is_debug %}
+                                <span class="donation-debug" style="display: none;">
+                                    [is_anonymous: {{ donation.is_anonymous|default('undefined') }}, name: {{ donation.donor_name }}]
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="donation-type">
+                                {% if donation.donation_type %}
+                                    {% if donation.donation_type == 'General Donation' %}
+                                        <span class="donation-badge type-general">General Donation</span>
+                                    {% elif donation.donation_type == 'Temple Construction' %}
+                                        <span class="donation-badge type-construction">Temple Construction</span>
+                                    {% elif donation.donation_type == 'Pooja' %}
+                                        <span class="donation-badge type-pooja">Pooja</span>
+                                    {% elif donation.donation_type == 'Festival' %}
+                                        <span class="donation-badge type-festival">Festival</span>
+                                    {% else %}
+                                        <span class="donation-badge">{{ donation.donation_type }}</span>
+                                    {% endif %}
+                                {% elif donation.type %}
+                                    {{ donation.type }}
+                                {% else %}
+                                    <span class="donation-badge type-general">General Donation</span>
+                                {% endif %}
+                            </td>
+                            <td class="donation-amount">₹{{ donation.amount }}</td>
+                            <td class="donation-status">
+                                <span class="donation-badge status-completed">Completed</span>
+                            </td>
+                            <!-- Action buttons column removed -->
+    </tr>
+    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="donationSuccessModal" tabindex="-1" aria-labelledby="donationSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-center bg-orange text-white">
+                <h5 class="modal-title w-100" id="donationSuccessModalLabel">Thank You for Your Donation!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="success-icon mb-4">
+                    <i class="fas fa-heart fa-4x text-orange"></i>
+                </div>
+                <h3 class="thank-you-heading mb-4">Thank You for Your Donation!</h3>
+                
+                <div class="donation-details p-4 bg-light rounded mb-4">
+                    <div class="row mb-2">
+                        <div class="col-5 text-start">Transaction ID:</div>
+                        <div class="col-7 text-end fw-bold" id="receiptTransactionId"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-start">Amount:</div>
+                        <div class="col-7 text-end fw-bold">₹<span id="receiptAmount"></span></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-start">Date:</div>
+                        <div class="col-7 text-end" id="receiptDate"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-start">Donation Type:</div>
+                        <div class="col-7 text-end" id="receiptDonationType"></div>
+                    </div>
+                    <div class="row donation-status-row mb-2">
+                        <div class="col-5 text-start">Status:</div>
+                        <div class="col-7 text-end text-success fw-bold">Successful</div>
+                    </div>
+                </div>
+                
+                <p class="mb-4">Your contribution helps us maintain and improve our temple. A receipt has been generated for your records.</p>
+                
+                <div class="d-grid gap-2">
+                    <a href="/donations/receipt/pay_QCE4oaWUQtX3aP" class="btn btn-primary donation-receipt-btn" target="_blank" id="receiptDownloadLink">
+                        <i class="fas fa-download me-2"></i>Download Receipt
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalTitle">Login Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-lock text-warning fa-4x mb-3"></i>
+                <h4 class="mb-3">Authentication Required</h4>
+                <p id="loginModalMessage">Please log in to view detailed donation information.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <a href="{{ url_for('user.login') }}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Go to Login
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Donation Details Modal -->
+<div class="modal fade" id="donationDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Donation Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="spinner-border text-primary" role="status" id="detailsSpinner">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="donationDetailsContent" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Donation Information</h6>
+                            <p><strong>Transaction ID:</strong> <span id="detailTransactionId"></span></p>
+                            <p><strong>Date & Time:</strong> <span id="detailDateTime"></span></p>
+                            <p><strong>Amount:</strong> ₹<span id="detailAmount"></span></p>
+                            <p><strong>Type:</strong> <span id="detailType"></span></p>
+                            <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Donor Information</h6>
+                            <p><strong>Name:</strong> <span id="detailDonorName"></span></p>
+                            <p><strong>Email:</strong> <span id="detailEmail"></span></p>
+                            <p><strong>Phone:</strong> <span id="detailPhone"></span></p>
+                            <p><strong>PAN:</strong> <span id="detailPan"></span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="mb-3">Additional Information</h6>
+                            <p><strong>Purpose:</strong> <span id="detailPurpose"></span></p>
+                            <p><strong>Notes:</strong> <span id="detailNotes"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="downloadDetailedReceipt()">
+                    <i class="fas fa-download"></i> Download Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Preview Modal -->
+<div class="modal fade" id="printPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Print Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4" id="printLoadingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="printPreviewContent"></div>
+                <div class="print-options mt-4">
+                    <h6>Print Options</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="includeTaxInfo" checked>
+                        <label class="form-check-label" for="includeTaxInfo">
+                            Include Tax Information
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="includeTerms" checked>
+                        <label class="form-check-label" for="includeTerms">
+                            Include Terms & Conditions
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Paper Size</label>
+                        <select class="form-select" id="paperSize">
+                            <option value="a4">A4</option>
+                            <option value="letter">Letter</option>
+                            <option value="legal">Legal</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Font Size</label>
+                        <select class="form-select" id="fontSize">
+                            <option value="normal">Normal</option>
+                            <option value="large">Large</option>
+                            <option value="larger">Larger</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="proceedWithPrint()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.donation-card {
+    transition: transform 0.2s;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.donation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.progress {
+    height: 10px;
+    border-radius: 5px;
+}
+
+.quick-amounts button {
+    transition: all 0.2s;
+}
+
+.quick-amounts button:hover {
+    transform: scale(1.05);
+}
+
+.donation-stats .badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+}
+
+.donor-name {
+    font-weight: 500;
+}
+
+/* Book Seva Button Style - applied to Donate Now button */
+.book-seva-btn {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    border: none;
+    padding: 1rem 1.8rem;
+    border-radius: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    width: 100%;
+    box-shadow: 0 6px 18px rgba(106, 17, 203, 0.25), 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.book-seva-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.book-seva-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(106, 17, 203, 0.4), 0 4px 10px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #2575fc, #6a11cb);
+}
+
+.book-seva-btn:hover::before {
+    left: 100%;
+}
+
+.book-seva-btn:active {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(var(--primary-orange-rgb), 0.3);
+}
+
+.book-seva-btn i {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+    transition: transform 0.3s ease;
+}
+
+.book-seva-btn:hover i {
+    transform: rotate(15deg);
+}
+
+/* Loading animation */
+.loading {
+    position: relative;
+}
+
+.loading:after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin: -10px 0 0 -10px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn-outline-info {
+    transition: all 0.2s;
+}
+
+.btn-outline-info:hover {
+    transform: scale(1.05);
+}
+
+#detailsSpinner {
+    width: 3rem;
+    height: 3rem;
+}
+
+.modal-lg {
+    max-width: 800px;
+}
+
+.donation-details h6 {
+    color: #666;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 8px;
+}
+
+/* Print-specific styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printSection, #printSection * {
+        visibility: visible;
+    }
+    #printSection {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    .no-print {
+        display: none !important;
+    }
+    .page-break {
+        page-break-after: always;
+    }
+    .receipt-container {
+        border: 1px solid #000;
+        padding: 20px;
+        margin: 20px;
+    }
+    .receipt-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .receipt-details {
+        margin: 20px 0;
+    }
+    .receipt-footer {
+        margin-top: 30px;
+        font-size: 0.8em;
+        text-align: center;
+    }
+}
+
+/* Print preview styles */
+#printPreviewContent {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: var(--preview-font-size, 1rem);
+}
+
+/* Paper size styles */
+.paper-a4 {
+    width: 210mm;
+    height: 297mm;
+}
+
+.paper-letter {
+    width: 216mm;
+    height: 279mm;
+}
+
+.paper-legal {
+    width: 216mm;
+    height: 356mm;
+}
+
+/* Font size variations */
+.font-normal {
+    --preview-font-size: 1rem;
+}
+
+.font-large {
+    --preview-font-size: 1.2rem;
+}
+
+.font-larger {
+    --preview-font-size: 1.4rem;
+}
+
+/* Error message style */
+.print-error {
+    color: #dc3545;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #dc3545;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+/* Seva Card Styles for Donations */
+.seva-card {
+    background-color: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    transition: all 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transform-origin: center bottom;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.seva-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    border-color: rgba(255, 127, 0, 0.2);
+}
+
+.seva-type-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    color: #FF7F00;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 2;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255, 127, 0, 0.2);
+}
+
+.seva-icon-wrapper {
+    height: 140px;
+    background: linear-gradient(135deg, #FF7F00, #FF9033);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.seva-icon-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/static/images/logo.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 80px;
+    opacity: 0.1;
+}
+
+.seva-icon {
+    font-size: 3.5rem;
+    z-index: 1;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.seva-content {
+    padding: 2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.seva-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    font-family: 'Cormorant Garamond', serif;
+}
+
+.seva-price {
+    color: #FF7F00;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.seva-description {
+    color: #666;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.seva-info {
+    margin-left: 0.5rem;
+    color: #D4AF37;
+    cursor: pointer;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.seva-info:hover .seva-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.seva-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background-color: #333;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.seva-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -8px;
+    border-width: 8px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+/* Custom donation input styling for seva-card */
+.seva-content .custom-donation {
+    margin-top: 1rem;
+}
+
+.seva-content .form-label {
+    font-size: 0.95rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.seva-content .form-control {
+    border-radius: 0.75rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    padding: 0.6rem 1rem;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.seva-content .form-control:focus {
+    border-color: #FF7F00;
+    box-shadow: 0 0 0 0.25rem rgba(255, 127, 0, 0.25);
+}
+
+.seva-content .input-group-text {
+    background-color: #FF7F00;
+    color: white;
+    border-color: #FF7F00;
+    border-radius: 0.75rem 0 0 0.75rem;
+    font-weight: 600;
+}
+
+/* Quick amount buttons styling */
+.seva-content .quick-amounts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.seva-content .quick-amounts button {
+    border-radius: 2rem;
+    border: 1px solid rgba(255, 127, 0, 0.3);
+    color: #FF7F00;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 127, 0, 0.05);
+    padding: 0.5rem 1rem;
+}
+
+.seva-content .quick-amounts button:hover {
+    background-color: #FF7F00;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(255, 127, 0, 0.3);
+}
+
+/* Adjust animation for donation cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.seva-card {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Section Heading Styles */
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid rgba(255, 127, 0, 0.1);
+    padding-bottom: 0.75rem;
+}
+
+.seva-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    position: relative;
+    padding-left: 1rem;
+}
+
+.seva-section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10%;
+    height: 80%;
+    width: 4px;
+    background: linear-gradient(to bottom, #FF7F00, #FF9033);
+    border-radius: 2px;
+}
+
+.donation-counter {
+    background: linear-gradient(135deg, #FF7F00, #FF9033);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 10px rgba(255, 127, 0, 0.2);
+}
+
+.donation-counter i {
+    font-size: 1.1rem;
+}
+
+/* Recent Donations Table Styling */
+.recent-donations-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    margin-bottom: 2rem;
+}
+
+.donation-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.donation-table th {
+    background: rgba(255, 127, 0, 0.05);
+    color: #555;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 1.2rem 1rem;
+    border-bottom: 2px solid rgba(255, 127, 0, 0.1);
+    text-align: left;
+}
+
+.donation-table tr:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.donation-row {
+    transition: all 0.3s ease;
+}
+
+.donation-row:hover {
+    background-color: rgba(255, 127, 0, 0.03);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.donation-table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.donation-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.donation-donor {
+    font-weight: 600;
+    color: #333;
+}
+
+.donation-amount {
+    font-weight: 700;
+    color: #FF7F00;
+}
+
+.donation-badge {
+    display: inline-block;
+    padding: 0.35rem 0.7rem;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.status-completed {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.recurring-badge {
+    background-color: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+    margin-left: 0.5rem;
+}
+
+.type-general {
+    background-color: rgba(255, 127, 0, 0.1);
+    color: #FF7F00;
+}
+
+.donation-details-btn {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.donation-details-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(106, 17, 203, 0.2);
+}
+
+.donation-details-btn i {
+    font-size: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .section-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .donation-counter {
+        align-self: flex-start;
+    }
+    
+    .donation-table {
+        display: block;
+        overflow-x: auto;
+    }
+}
+
+/* Donation Thank You Modal Styling */
+.donation-thank-you-modal {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.donation-modal-header {
+    background: linear-gradient(135deg, #FF7F00, #FF9033);
+    border-bottom: none;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.seva-modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.donation-modal-header .btn-close {
+    color: white;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    opacity: 1;
+    padding: 0.75rem;
+    margin: -0.75rem -0.75rem -0.75rem auto;
+    transition: all 0.3s ease;
+}
+
+.donation-modal-header .btn-close:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: rotate(90deg);
+}
+
+.donation-success-container {
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.success-icon-container {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #FF7F00, #FF9033);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 20px rgba(255, 127, 0, 0.2);
+    animation: pulseSuccess 2s infinite;
+}
+
+@keyframes pulseSuccess {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 127, 0, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 127, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 127, 0, 0);
+    }
+}
+
+.donation-success-icon {
+    color: white;
+    font-size: 2.5rem;
+}
+
+.donation-thank-you-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.donation-details {
+    background-color: rgba(255, 127, 0, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 1.5rem;
+}
+
+.donation-detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.donation-detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #555;
+}
+
+.detail-value {
+    color: #333;
+}
+
+.detail-value.donation-amount {
+    font-weight: 700;
+    color: #FF7F00;
+}
+
+.donation-receipt-btn {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(106, 17, 203, 0.2);
+    margin-top: 1rem;
+}
+
+.donation-receipt-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(106, 17, 203, 0.3);
+    color: white;
+}
+
+.donation-modal-footer {
+    background-color: #f9f9f9;
+    border-top: none;
+    padding: 1rem 1.5rem;
+}
+
+.modal-close-btn {
+    background-color: #f0f0f0;
+    color: #555;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.modal-close-btn:hover {
+    background-color: #e0e0e0;
+}
+</style>
+
+<!-- Printable content container -->
+<div id="printSection" style="display: none;"></div>
+
+<!-- External Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+function setAmount(donationId, amount) {
+    document.getElementById(`amount_${donationId}`).value = amount;
+}
+
+function setAmountFromButton(button) {
+    const donationId = button.getAttribute('data-donation-id');
+    const amount = button.getAttribute('data-amount');
+    setAmount(donationId, parseInt(amount));
+}
+
+function quickDonate(type) {
+    console.log("Quick donate called for: " + type);
+    
+    // Check if the user is logged in
+    fetch('/check-auth')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.is_authenticated) {
+                // Store the goal title to sessionStorage to return after login
+                sessionStorage.setItem('donationGoal', type);
+                
+                // Show login modal
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                document.getElementById('loginModalTitle').textContent = 'Login Required to Donate';
+                document.getElementById('loginModalMessage').textContent = 'Please log in to continue with your donation.';
+                loginModal.show();
+                return;
+            }
+            
+            // Ask for donation amount using prompt
+            const amount = prompt(`Enter donation amount for ${type}:`, "1000");
+            
+            if (amount === null) {
+                console.log("Donation cancelled by user");
+                return;
+            }
+            
+            // Validate amount
+            const donationAmount = parseFloat(amount);
+            if (isNaN(donationAmount) || donationAmount <= 0) {
+                alert("Please enter a valid donation amount");
+                return;
+            }
+            
+            // Confirm donation
+            if (!confirm(`Confirm donation of ₹${donationAmount} for ${type}?`)) {
+                console.log("Donation confirmation declined");
+                return;
+            }
+            
+            // Show processing message
+            const processingMsg = document.createElement('div');
+            processingMsg.className = 'alert alert-info';
+            processingMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing your donation...';
+            document.querySelector('.container').prepend(processingMsg);
+            
+            // Process donation via AJAX
+            const formData = new FormData();
+            formData.append('goal_title', type);
+            formData.append('amount', donationAmount);
+            
+            fetch('/user/quick-donate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove processing message
+                processingMsg.remove();
+                
+                if (data.status === 'success') {
+                    // Show success modal
+                    const modal = new bootstrap.Modal(document.getElementById('donationSuccessModal'));
+                    document.getElementById('receiptAmount').textContent = donationAmount.toLocaleString('en-IN');
+                    document.getElementById('receiptTransactionId').textContent = data.data.transactionId;
+                    document.getElementById('receiptDate').textContent = data.data.date;
+                    modal.show();
+                    
+                    // Update progress bar for the goal
+                    updateDonationGoalProgress(type, data.data.current, data.data.percentage);
+                    
+                    // Update donation stats
+                    updateDonationStats(donationAmount, null, false);
+                } else {
+                    // Show error message
+                    alert(data.message || 'An error occurred during donation');
+                }
+            })
+            .catch(error => {
+                processingMsg.remove();
+                console.error('Donation error:', error);
+                alert('An error occurred while processing your donation. Please try again.');
+            });
+        })
+        .catch(error => {
+            console.error('Auth check error:', error);
+            alert('Could not verify your login status. Please try again or log in again.');
+        });
+}
+
+function processDonation(donationId) {
+    // First check if the user is logged in
+    fetch('/check-auth')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.is_authenticated) {
+                // Get the anonymous checkbox value
+                const isAnonymous = document.getElementById(`anonymous_${donationId}`) ? 
+                                   document.getElementById(`anonymous_${donationId}`).checked : false;
+                
+                // Store donation details for after login
+                sessionStorage.setItem('pendingDonation', JSON.stringify({
+                    donationId,
+                    amount: document.getElementById(`amount_${donationId}`).value,
+                    isRecurring: false,
+                    isAnonymous: isAnonymous
+                }));
+                
+                // Redirect to login page
+                window.location.href = '{{ url_for("user.login") }}';
+                return;
+            }
+            
+            // If authenticated, proceed with donation processing
+            processDonationFlow(donationId);
+        })
+        .catch(error => {
+            console.error('Auth check error:', error);
+            showErrorModal('Could not verify your login status. Please try again.');
+        });
+}
+
+// The original processDonation logic, renamed to processDonationFlow
+async function processDonationFlow(donationId) {
+    try {
+        const amountInput = document.getElementById(`amount_${donationId}`);
+        
+        // Validate form element is found
+        if (!amountInput) {
+            showErrorModal('Form element not found. Please try again or refresh the page.');
+            return;
+        }
+        
+        const amount = parseFloat(amountInput.value);
+        // Get the anonymous checkbox value
+        const isAnonymous = document.getElementById(`anonymous_${donationId}`) ? 
+                           document.getElementById(`anonymous_${donationId}`).checked : false;
+        // Set default values for other parameters
+        const isRecurring = false;
+
+        // Validate amount
+        if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+            showErrorModal('Please enter a valid donation amount.');
+            return;
+        }
+        
+        // Show processing indicator
+        const processingMessage = document.createElement('div');
+        processingMessage.className = 'alert alert-info alert-dismissible fade show';
+        processingMessage.innerHTML = 
+            '<i class="fas fa-spinner fa-spin me-2"></i> Initializing payment...' +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.querySelector('.container').insertBefore(processingMessage, document.querySelector('.container').firstChild);
+        
+        // Create Razorpay order
+        const orderResponse = await fetch('/donations/create-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                donationId,
+                amount,
+                isRecurring,
+                isAnonymous
+            })
+        });
+        
+        // Remove processing message
+        processingMessage.remove();
+        
+        if (!orderResponse.ok) {
+            const errorData = await orderResponse.json();
+            throw new Error(errorData.message || 'Failed to create payment order');
+        }
+        
+        const orderData = await orderResponse.json();
+        if (!orderData.success) {
+            showError(orderData.message || 'Failed to create payment order');
+            return;
+        }
+        
+        // Open Razorpay checkout
+        const options = {
+            key: orderData.data.key_id,
+            amount: parseInt(amount * 100), // amount in smallest currency unit
+            currency: orderData.data.currency,
+            name: 'Shri Veeranjaneya Swamy Temple',
+            description: 'Temple Donation',
+            order_id: orderData.data.order_id,
+            handler: function(response) {
+                // On successful payment
+                // Include the anonymous flag from the checkbox
+                const isAnonymous = document.getElementById(`anonymous_${donationId}`).checked;
+                console.log("Anonymous donation:", isAnonymous);
+                verifyPayment(response, {donationId, isRecurring, isAnonymous});
+            },
+            prefill: {
+                name: "{{ session.get('user', {}).get('name', '') }}",
+                email: "{{ session.get('user', {}).get('email', '') }}",
+                contact: "{{ session.get('user', {}).get('phone', '') }}"
+            },
+            theme: {
+                color: '#3399cc'
+            },
+            modal: {
+                ondismiss: function() {
+                    console.log('Checkout form closed by user');
+                    // Show a message when user closes the payment window
+                    const closeMessage = document.createElement('div');
+                    closeMessage.className = 'alert alert-warning alert-dismissible fade show';
+                    closeMessage.innerHTML = 
+                        'Payment window closed. Your donation was not processed. Please try again if you want to make a donation.' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                    document.querySelector('.container').insertBefore(closeMessage, document.querySelector('.container').firstChild);
+                }
+            }
+        };
+        
+        try {
+            const razorpay = new Razorpay(options);
+            
+            razorpay.on('payment.failed', function(failureResponse) {
+                console.error('Payment failed:', failureResponse.error);
+                let errorMessage = 'Payment failed.';
+                
+                if (failureResponse.error) {
+                    if (failureResponse.error.description) {
+                        errorMessage += ' ' + failureResponse.error.description;
+                    } else if (failureResponse.error.reason) {
+                        errorMessage += ' Reason: ' + failureResponse.error.reason;
+                    }
+                    
+                    if (failureResponse.error.step) {
+                        errorMessage += ' (Failed at: ' + failureResponse.error.step + ')';
+                    }
+                }
+                
+                showError(errorMessage);
+            });
+            
+            razorpay.open();
+        } catch (razorpayError) {
+            console.error('Error initializing Razorpay:', razorpayError);
+            showError('Could not initialize payment gateway. Please try again later.');
+        }
+        
+    } catch (error) {
+        console.error('Error processing donation:', error);
+        showError('An error occurred while processing your donation: ' + (error.message || 'Unknown error'));
+    }
+}
+
+// Update function to handle specified parameters
+function updateDonationStats(amount, donationId, isAnonymous) {
+    const totalDonors = document.getElementById('totalDonors');
+    
+    if (!totalDonors) {
+        console.error('Donation stats elements not found');
+        return;
+    }
+    
+    // Update the donor count
+    const currentDonors = parseInt(totalDonors.textContent) || 0;
+    totalDonors.textContent = currentDonors + 1;
+    
+    // Parse and update the total amount, handling any potential formatting
+    const currentAmount = totalAmount.textContent.replace(/[^\d.-]/g, '') || '0';
+    const parsedCurrentAmount = parseFloat(currentAmount) || 0;
+    const parsedNewAmount = parseFloat(amount) || 0;
+    const newTotal = parsedCurrentAmount + parsedNewAmount;
+    
+    // Format the new total with commas for Indian numbering system
+    totalAmount.textContent = newTotal.toLocaleString('en-IN');
+
+    // Add new donation to table
+    const tbody = document.getElementById('recentDonationsTable');
+    if (tbody) {
+        const newRow = tbody.insertRow(0);
+        newRow.innerHTML = `
+            <td>${new Date().toISOString().split('T')[0]}</td>
+            <td>${isAnonymous ? '<em>Anonymous</em>' : 'New Donor'}</td>
+            <td>General Donation</td>
+            <td>₹${amount}</td>
+            <td><span class="badge bg-success">Completed</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-info" 
+                        onclick="viewDonationDetails('new')"
+                        data-bs-toggle="tooltip" 
+                        title="View detailed information">
+                    <i class="fas fa-info-circle"></i> Details
+                </button>
+            </td>
+        `;
+        newRow.style.backgroundColor = '#f0fff0';
+        setTimeout(() => {
+            newRow.style.transition = 'background-color 1s';
+            newRow.style.backgroundColor = '';
+        }, 100);
+    } else {
+        console.error('Recent donations table not found');
+    }
+}
+
+function downloadReceipt() {
+    // Get payment details from the modal
+    const transactionId = document.querySelector('.donation-detail-item:nth-child(1) .detail-value').textContent;
+    const amount = document.querySelector('.donation-detail-item:nth-child(2) .detail-value').textContent.replace('₹', '');
+    const date = document.querySelector('.donation-detail-item:nth-child(3) .detail-value').textContent;
+    
+    const { jsPDF } = window.jspdf;
+    // Create landscape receipt like Razorpay
+    const doc = new jsPDF('landscape');
+    
+    // Set white background
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, doc.internal.pageSize.width, doc.internal.pageSize.height, 'F');
+    
+    // Add Razorpay-like blue header
+    doc.setFillColor(0, 112, 186); // Razorpay blue
+    doc.rect(0, 0, doc.internal.pageSize.width, 32, 'F');
+    
+    // Add white text for header
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("PAYMENT RECEIPT", 20, 20);
+    
+    // Add date on right side of header
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text("Date: " + date, doc.internal.pageSize.width - 20, 20, { align: "right" });
+    
+    // Reset text color for main content
+    doc.setTextColor(0, 0, 0);
+    
+    // Add temple logo area
+    doc.setDrawColor(240, 240, 240);
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(20, 40, 80, 80, 3, 3, 'FD');
+    
+    // Add temple name instead of logo
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Shri veeranjaneya swamy Temple", 60, 70, { align: "center" });
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Charitable & Religious Trust", 60, 80, { align: "center" });
+    
+    // Payment section
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("PAYMENT DETAILS", 120, 50);
+    doc.setLineWidth(0.5);
+    doc.line(120, 52, 220, 52);
+    
+    // Payment info
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    // Create table-like structure for payment details
+    const paymentDetails = [
+        ["Transaction ID", transactionId],
+        ["Amount Paid", "₹ " + amount],
+        ["Payment Status", "Completed"],
+        ["Payment Method", "Razorpay"],
+        ["Transaction Date", date]
+    ];
+    
+    let yPos = 60;
+    paymentDetails.forEach(([label, value]) => {
+        doc.setFont("helvetica", "normal");
+        doc.text(label, 120, yPos);
+        doc.setFont("helvetica", "bold");
+        doc.text(value, 220, yPos, { align: "right" });
+        yPos += 10;
+    });
+    
+    // Donor section
+    yPos = 130;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("DONOR DETAILS", 20, yPos);
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos+2, 120, yPos+2);
+    
+    // Donor info
+    const donorDetails = [
+        ["Donor Name", "{{ session.get('user', {}).get('name', 'Guest') }}"],
+        ["Email", "{{ session.get('user', {}).get('email', 'N/A') }}"],
+        ["Phone", "{{ session.get('user', {}).get('phone', 'N/A') }}"],
+        ["Donation Type", "General Donation"]
+    ];
+    
+    yPos += 10;
+    donorDetails.forEach(([label, value]) => {
+        doc.setFont("helvetica", "normal");
+        doc.text(label, 20, yPos);
+        doc.setFont("helvetica", "bold");
+        doc.text(value, 120, yPos, { align: "right" });
+        yPos += 10;
+    });
+    
+    // Donation purpose section
+    yPos = 130;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("DONATION PURPOSE", 150, yPos);
+    doc.setLineWidth(0.5);
+    doc.line(150, yPos+2, 270, yPos+2);
+    
+    // Purpose info
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text("This donation is made to support temple activities", 150, yPos+10);
+    doc.text("and ongoing religious ceremonies.", 150, yPos+20);
+    
+    // Add tax info
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "italic");
+    doc.text("This donation is eligible for tax benefits under Section 80G.", 150, yPos+35);
+    doc.text("Temple PAN: AAATP1234A | 80G Reg No: DIT(E)/80G/333/2010", 150, yPos+45);
+    
+    // Add verification QR code
+    const verificationUrl = window.location.origin + "/verify-receipt/" + transactionId;
+    const qr = new QRCode(document.createElement("div"), {
+        text: verificationUrl,
+        width: 100,
+        height: 100
+    });
+    
+    // Convert QR code to image and add to PDF
+    const qrImage = qr._el.firstChild.toDataURL("image/png");
+    doc.addImage(qrImage, "PNG", 230, 165, 40, 40);
+    
+    // Add QR verification text
+    doc.setFontSize(8);
+    doc.text("Scan to verify receipt", 250, 210, { align: "center" });
+    
+    // Add footer with blue bar
+    doc.setFillColor(0, 112, 186); // Razorpay blue
+    doc.rect(0, doc.internal.pageSize.height - 20, doc.internal.pageSize.width, 20, 'F');
+    
+    // Footer text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("This is a computer-generated receipt and does not require a physical signature.", 
+             doc.internal.pageSize.width/2, doc.internal.pageSize.height - 10, { align: "center" });
+    doc.text("For any queries, please contact: temple@example.com | +91 9876543210", 
+             doc.internal.pageSize.width/2, doc.internal.pageSize.height - 5, { align: "center" });
+    
+    // Save the PDF
+    const fileName = "temple-donation-receipt-" + transactionId + ".pdf";
+    doc.save(fileName);
+}
+
+function shareDonation() {
+    // Implement social sharing
+    if (navigator.share) {
+        navigator.share({
+            title: 'Temple Donation',
+            text: 'I just made a donation to support our temple! Join me in contributing to this noble cause.',
+            url: window.location.href
+        }).catch(err => console.error('Error sharing:', err));
+    } else {
+        alert('Sharing is not supported on this browser');
+    }
+}
+
+// Real-time updates simulation
+setInterval(() => {
+    const randomAmount = Math.floor(Math.random() * 10000) + 1000;
+    updateDonationStats(randomAmount);
+}, 60000);
+
+// Add a new function to update the donation goal progress bar
+function updateDonationGoalProgress(goalTitle, current, percentage) {
+    // Find the goal card based on title
+    const goalCards = document.querySelectorAll('.card .card-title');
+    for (const cardTitle of goalCards) {
+        if (cardTitle.textContent.trim() === goalTitle) {
+            const card = cardTitle.closest('.card');
+            if (!card) continue;
+            
+            // Update progress bar
+            const progressBar = card.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+                progressBar.textContent = `${percentage}%`;
+                progressBar.setAttribute('aria-valuenow', percentage);
+            }
+            
+            // Update amount text
+            const amountText = card.querySelector('.card-text span');
+            if (amountText) {
+                amountText.textContent = `₹${parseInt(current).toLocaleString('en-IN')}`;
+            }
+            
+            // Add a subtle highlight effect
+            card.style.transition = 'box-shadow 0.3s ease';
+            card.style.boxShadow = '0 0 15px rgba(0, 200, 0, 0.5)';
+            setTimeout(() => {
+                card.style.boxShadow = '';
+            }, 1500);
+            
+            break;
+        }
+    }
+}
+
+// Remove or modify the old donationGoals object since we're now getting data from the server
+// Replace the old initialization with a dynamic one that reads from the DOM
+function initializeDonationGoals() {
+    const donationGoals = {};
+    
+    // Find all goal cards
+    const goalCards = document.querySelectorAll('.card-title');
+    goalCards.forEach(card => {
+        const title = card.textContent.trim();
+        const cardBody = card.closest('.card-body');
+        if (!cardBody) return;
+        
+        const progressBar = cardBody.querySelector('.progress-bar');
+        const currentText = cardBody.querySelector('.card-text span');
+        const goalText = cardBody.querySelector('.card-text');
+        
+        if (!progressBar || !currentText || !goalText) return;
+        
+        // Parse values
+        const percentage = parseInt(progressBar.getAttribute('aria-valuenow') || '0');
+        const currentText1 = currentText.textContent.replace(/[^\d]/g, '');
+        const goalTextMatch = goalText.textContent.match(/of\s+₹([0-9,]+)/);
+        
+        const current = parseInt(currentText1.replace(/,/g, '')) || 0;
+        const goal = goalTextMatch ? parseInt(goalTextMatch[1].replace(/,/g, '')) || 0 : 0;
+        
+        // Store in our object
+        const key = title.toLowerCase().replace(/\s+/g, '');
+        donationGoals[key] = {
+            current,
+            goal,
+            percentage,
+            title
+        };
+    });
+    
+    window.donationGoals = donationGoals;
+    console.log('Donation goals initialized:', donationGoals);
+}
+
+// Initialize donation goals on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDonationGoals();
+    
+    // Check if there's a stored goal from pre-login
+    const storedGoal = sessionStorage.getItem('donationGoal');
+    if (storedGoal) {
+        sessionStorage.removeItem('donationGoal');
+        setTimeout(() => {
+            quickDonate(storedGoal);
+        }, 1000);
+    }
+});
+
+function viewDonationDetails(donationId) {
+    // Check authentication status
+    fetch('/check-auth')
+        .then(response => response.json())
+        .then(data => {
+            if (data.is_authenticated) {
+                showDonationDetails(donationId);
+            } else {
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error checking authentication:', error);
+            alert('An error occurred. Please try again later.');
+        });
+}
+
+function showDonationDetails(donationId) {
+    const detailsModal = new bootstrap.Modal(document.getElementById('donationDetailsModal'));
+    const spinner = document.getElementById('detailsSpinner');
+    const content = document.getElementById('donationDetailsContent');
+    
+    // Show spinner, hide content
+    spinner.style.display = 'block';
+    content.style.display = 'none';
+    detailsModal.show();
+
+    // Fetch donation details
+    fetch(`/donation-details/${donationId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.donation) {
+                const donation = data.donation;
+                
+                // Set transaction ID for receipt download
+                const transactionId = donation.transaction_id || donation.payment_id || donationId;
+                document.getElementById('detailTransactionId').textContent = transactionId;
+                
+                // Update other fields
+                document.getElementById('detailDateTime').textContent = new Date(donation.date || donation.created_at || '').toLocaleString();
+                document.getElementById('detailAmount').textContent = parseFloat(donation.amount).toLocaleString('en-IN');
+                document.getElementById('detailType').textContent = donation.donation_type_name || donation.donation_type || 'General Donation';
+                document.getElementById('detailStatus').textContent = donation.status || 'Completed';
+                document.getElementById('detailDonorName').textContent = donation.donor_name || 'Anonymous';
+                document.getElementById('detailEmail').textContent = donation.email || 'N/A';
+                document.getElementById('detailPhone').textContent = donation.phone || 'N/A';
+                document.getElementById('detailPan').textContent = donation.pan || 'N/A';
+                document.getElementById('detailPurpose').textContent = donation.purpose || 'Temple Donation';
+                document.getElementById('detailNotes').textContent = donation.notes || 'No additional notes';
+                
+                // Enable download receipt button
+                const downloadBtn = document.querySelector('#donationDetailsModal .modal-footer .btn-primary');
+                downloadBtn.disabled = !transactionId;
+            } else {
+                content.innerHTML = '<div class="alert alert-danger">Error loading donation details: ' + (data.message || 'Unknown error') + '</div>';
+            }
+            
+            // Hide spinner, show content
+            spinner.style.display = 'none';
+            content.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error fetching donation details:', error);
+            spinner.style.display = 'none';
+            content.innerHTML = '<div class="alert alert-danger">Error loading donation details. Please try again later.</div>';
+        });
+}
+
+function downloadDetailedReceipt() {
+    const transactionId = document.getElementById('detailTransactionId').textContent;
+    if (transactionId) {
+        window.open(`/donations/receipt/${transactionId}`, '_blank');
+    } else {
+        alert('Transaction ID not found. Unable to generate receipt.');
+    }
+}
+
+function printReceipt() {
+    try {
+        // Show print preview modal
+        const previewModal = new bootstrap.Modal(document.getElementById('printPreviewModal'));
+        const loadingSpinner = document.getElementById('printLoadingSpinner');
+        const previewContent = document.getElementById('printPreviewContent');
+        
+        loadingSpinner.style.display = 'block';
+        previewContent.style.display = 'none';
+        previewModal.show();
+        
+        // Generate preview content
+        setTimeout(() => {
+            try {
+                const content = generateReceiptContent();
+                previewContent.innerHTML = content;
+                loadingSpinner.style.display = 'none';
+                previewContent.style.display = 'block';
+                
+                // Apply initial paper size and font size
+                updatePreviewStyles();
+            } catch (error) {
+                showPrintError('Error generating preview: ' + error.message);
+            }
+        }, 500);
+    } catch (error) {
+        showPrintError('Error preparing print preview: ' + error.message);
+    }
+}
+
+function generateReceiptContent() {
+    // Validate required elements
+    const requiredElements = {
+        transactionId: document.getElementById("receiptTransactionId"),
+        date: document.getElementById("receiptDate"),
+        amount: document.getElementById("receiptAmount")
+    };
+    
+    for (const [key, element] of Object.entries(requiredElements)) {
+        if (!element) {
+            throw new Error(`Required element ${key} not found`);
+        }
+    }
+    
+    const includeTaxInfo = document.getElementById('includeTaxInfo')?.checked ?? true;
+    const includeTerms = document.getElementById('includeTerms')?.checked ?? true;
+    
+    return `
+        <div class="receipt-container">
+            <div class="receipt-header">
+                <h1>Sri Temple</h1>
+                <p>Temple Address Line 1<br>Temple Address Line 2</p>
+                <h2>DONATION RECEIPT</h2>
+            </div>
+            <div class="receipt-details">
+                <table style="width: 100%">
+                    <tr>
+                        <td><strong>Receipt No:</strong></td>
+                        <td>${requiredElements.transactionId.textContent}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Date:</strong></td>
+                        <td>${requiredElements.date.textContent}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Amount:</strong></td>
+                        <td>₹${requiredElements.amount.textContent}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Payment Mode:</strong></td>
+                        <td>Online</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Donor Name:</strong></td>
+                        <td>${"{{ session.get('user_name', 'Guest') }}"}</td>
+                    </tr>
+</table>
+            </div>
+            ${includeTaxInfo ? `
+                <div style="text-align: center; margin: 20px 0;">
+                    <p><em>This donation is eligible for tax benefit under section 80G</em></p>
+                    <p>Temple Registration No: XXXX</p>
+                    <p>PAN: XXXXX1234X</p>
+                </div>
+            ` : ''}
+            ${includeTerms ? `
+                <div class="receipt-footer">
+                    <p>Terms and Conditions:</p>
+                    <ol style="font-size: 0.8em;">
+                        <li>This receipt is valid for tax deduction under section 80G.</li>
+                        <li>The donation amount is non-refundable.</li>
+                        <li>For any queries, please contact the temple office with the receipt number.</li>
+                        <li>Visit our website for the complete donation policy.</li>
+                    </ol>
+                </div>
+            ` : ''}
+            <p style="margin-top: 20px; text-align: center;">
+                This is a computer-generated receipt and does not require signature
+            </p>
+            ${localStorage.getItem("receipt_" + requiredElements.transactionId.textContent) ? 
+              '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); font-size: 72px; color: rgba(0,0,0,0.1);">DUPLICATE</div>' : ''}
+        </div>
+    `;
+}
+
+function updatePreviewStyles() {
+    const previewContent = document.getElementById('printPreviewContent');
+    const paperSize = document.getElementById('paperSize').value;
+    const fontSize = document.getElementById('fontSize').value;
+    
+    // Remove existing classes
+    previewContent.classList.remove('paper-a4', 'paper-letter', 'paper-legal', 'font-normal', 'font-large', 'font-larger');
+    
+    // Add new classes
+    previewContent.classList.add(`paper-${paperSize}`, `font-${fontSize}`);
+}
+
+function showPrintError(message) {
+    const loadingSpinner = document.getElementById('printLoadingSpinner');
+    const previewContent = document.getElementById('printPreviewContent');
+    
+    loadingSpinner.style.display = 'none';
+    previewContent.innerHTML = `<div class="print-error">${message}</div>`;
+    previewContent.style.display = 'block';
+}
+
+function validateReceiptData() {
+    const required = {
+        transactionId: document.getElementById("receiptTransactionId")?.textContent,
+        date: document.getElementById("receiptDate")?.textContent,
+        amount: document.getElementById("receiptAmount")?.textContent
+    };
+
+    const missing = Object.entries(required)
+        .filter(([_, value]) => !value)
+        .map(([key, _]) => key);
+
+    if (missing.length > 0) {
+        throw new Error(`Missing required data: ${missing.join(', ')}`);
+    }
+
+    return required;
+}
+
+async function generateQRCode(verificationUrl) {
+    return new Promise((resolve, reject) => {
+        try {
+            const qr = new QRCode(document.createElement("div"), {
+                text: verificationUrl,
+                width: 50,
+                height: 50
+            });
+            
+            // Get the QR code as a data URL
+            const qrImage = qr._el.firstChild.toDataURL("image/png");
+            resolve(qrImage);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+async function proceedWithPrint() {
+    try {
+        // Validate required data first
+        const receiptData = validateReceiptData();
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get print options
+        const includeTaxInfo = document.getElementById('includeTaxInfo')?.checked ?? true;
+        const includeTerms = document.getElementById('includeTerms')?.checked ?? true;
+        const fontSize = document.getElementById('fontSize').value;
+        
+        // Set base font size based on selected option
+        const baseFontSize = fontSize === 'large' ? 12 : (fontSize === 'larger' ? 14 : 10);
+        
+        // Add temple header
+        doc.setFontSize(baseFontSize * 2);
+        doc.setFont("helvetica", "bold");
+        doc.text("Sri Temple", 105, 20, { align: "center" });
+        
+        // Add address
+        doc.setFontSize(baseFontSize);
+        doc.setFont("helvetica", "normal");
+        doc.text("Temple Address Line 1", 105, 30, { align: "center" });
+        doc.text("Temple Address Line 2", 105, 35, { align: "center" });
+        
+        // Add receipt title with border
+        doc.setFontSize(baseFontSize * 1.4);
+        doc.setFont("helvetica", "bold");
+        doc.rect(20, 40, 170, 10);
+        doc.text("DONATION RECEIPT", 105, 47, { align: "center" });
+        
+        // Add receipt details
+        doc.setFontSize(baseFontSize);
+        doc.setFont("helvetica", "normal");
+        
+        const receiptDetails = [
+            ["Receipt No:", receiptData.transactionId],
+            ["Date:", receiptData.date],
+            ["Amount:", "₹" + receiptData.amount],
+            ["Payment Mode:", "Online"],
+            ["Donor Name:", "{{ session.get('user_name', 'Guest') }}"]
+        ];
+        
+        // Add border around details
+        doc.rect(20, 55, 170, 50);
+        
+        let y = 65;
+        receiptDetails.forEach(([label, value]) => {
+            doc.text(label, 30, y);
+            doc.text(value, 90, y);
+            y += 8;
+        });
+        
+        // Add tax information if selected
+        if (includeTaxInfo) {
+            y += 5;
+            doc.setFont("helvetica", "italic");
+            doc.text("This donation is eligible for tax benefit under section 80G", 105, y, { align: "center" });
+            y += 8;
+            doc.text("Temple Registration No: XXXX", 105, y, { align: "center" });
+            y += 5;
+            doc.text("PAN: XXXXX1234X", 105, y, { align: "center" });
+        }
+        
+        // Generate and add QR code
+        try {
+            const verificationUrl = window.location.origin + "/verify-receipt/" + receiptData.transactionId;
+            const qrImage = await generateQRCode(verificationUrl);
+            
+            // Add QR code to bottom right
+            doc.addImage(qrImage, "PNG", 140, y + 10, 30, 30);
+            
+            // Add verification text
+            doc.setFontSize(baseFontSize * 0.8);
+            doc.text("Scan to verify:", 140, y + 45);
+            doc.text(verificationUrl, 140, y + 50, { maxWidth: 50 });
+        } catch (error) {
+            console.warn('Failed to generate QR code:', error);
+            // Continue without QR code
+        }
+        
+        // Add footer
+        y += 60;
+        doc.rect(20, y, 170, 8);
+        doc.setFontSize(baseFontSize * 0.9);
+        doc.text("This is a computer-generated receipt and does not require signature", 105, y + 5, { align: "center" });
+        
+        // Add watermark for duplicate if needed
+        const isDuplicate = localStorage.getItem("receipt_" + receiptData.transactionId);
+        if (isDuplicate) {
+            doc.setTextColor(220, 220, 220);
+            doc.setFontSize(72);
+            doc.text("DUPLICATE", 105, 120, { 
+                align: "center",
+                angle: 45
+            });
+        }
+        
+        // Store receipt information
+        localStorage.setItem("receipt_" + receiptData.transactionId, "printed");
+        
+        // Save the PDF
+        doc.save("temple-donation-receipt.pdf");
+        
+        // Close the preview modal
+        const previewModal = bootstrap.Modal.getInstance(document.getElementById('printPreviewModal'));
+        previewModal.hide();
+        
+    } catch (error) {
+        showPrintError('Error generating PDF: ' + error.message);
+        console.error('PDF generation error:', error);
+    }
+}
+
+// Add event listeners for print options
+document.addEventListener('DOMContentLoaded', function() {
+    const paperSizeSelect = document.getElementById('paperSize');
+    const fontSizeSelect = document.getElementById('fontSize');
+    
+    if (paperSizeSelect && fontSizeSelect) {
+        paperSizeSelect.addEventListener('change', updatePreviewStyles);
+        fontSizeSelect.addEventListener('change', updatePreviewStyles);
+    }
+});
+
+// Initialize all tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Function to show error modal
+function showErrorModal(message) {
+    // Close any existing modals first
+    closeExistingModals();
+    
+    // Get the modal element or create it if it doesn't exist
+    let errorModal = document.getElementById('errorModal');
+    
+    // If the modal doesn't exist, create it
+    if (!errorModal) {
+        const modalHtml = `
+            <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">Error</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="errorMessage"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        errorModal = document.getElementById('errorModal');
+    }
+    
+    // Set the error message
+    document.getElementById('errorMessage').textContent = message;
+    
+    // Create and show a new modal instance
+    const bsModal = new bootstrap.Modal(errorModal);
+    bsModal.show();
+}
+
+// Function to close existing modals
+function closeExistingModals() {
+    // Close any bootstrap modals that are open
+    document.querySelectorAll('.modal.show').forEach(modal => {
+        const bsInstance = bootstrap.Modal.getInstance(modal);
+        if (bsInstance) {
+            bsInstance.hide();
+        }
+    });
+    
+    // Clean up any lingering bootstrap modal elements
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.parentNode.removeChild(backdrop);
+    });
+}
+
+// Check for pending donation after login
+document.addEventListener('DOMContentLoaded', function() {
+    // Clean up any stuck modals on page load
+    cleanupModals();
+    
+    // Fix any NaN in the total amount display
+    const totalAmount = document.getElementById('totalAmount');
+    if (totalAmount) {
+        const currentText = totalAmount.textContent;
+        if (currentText === 'NaN' || isNaN(parseFloat(currentText.replace(/[^\d.-]/g, '')))) {
+            totalAmount.textContent = '0';
+        } else {
+            // Ensure proper formatting for existing number
+            const amount = parseFloat(currentText.replace(/[^\d.-]/g, '')) || 0;
+            totalAmount.textContent = amount.toLocaleString('en-IN');
+        }
+    }
+    
+    const pendingDonation = sessionStorage.getItem('pendingDonation');
+    if (pendingDonation) {
+        try {
+            const donation = JSON.parse(pendingDonation);
+            // Clear the pending donation
+            sessionStorage.removeItem('pendingDonation');
+            // Process the donation
+            processDonation(donation.donationId);
+        } catch (error) {
+            console.error('Error processing pending donation:', error);
+        }
+    }
+});
+
+// Function to clean up any stuck modals
+function cleanupModals() {
+    // Remove any lingering show classes and modal backdrops
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal.show').forEach(modal => {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        modal.removeAttribute('aria-modal');
+        modal.removeAttribute('role');
+    });
+    
+    // Remove any backdrop elements
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.parentNode.removeChild(backdrop);
+    });
+}
+
+// Close any existing modals when the page loads
+window.addEventListener('load', function() {
+    // Remove any modal that might be showing from a previous state
+    document.querySelectorAll('.modal.show').forEach(modal => {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    });
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.parentNode.removeChild(backdrop);
+    });
+});
+
+// Verify payment function
+async function verifyPayment(response, donationData) {
+    try {
+        // Show verification in progress message
+        const verifyMessage = document.createElement('div');
+        verifyMessage.id = 'verify-message';
+        verifyMessage.className = 'alert alert-info alert-dismissible fade show';
+        verifyMessage.innerHTML = 
+            '<i class="fas fa-spinner fa-spin me-2"></i> Verifying your payment...' +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.querySelector('.container').insertBefore(verifyMessage, document.querySelector('.container').firstChild);
+        
+        console.log('Verifying payment with data:', { ...response, ...donationData });
+        
+        // Verify payment on server
+        const verifyResponse = await fetch('/donations/verify-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                ...response,
+                ...donationData
+            })
+        });
+        
+        // Remove verification message
+        const oldMessage = document.getElementById('verify-message');
+        if (oldMessage) {
+            oldMessage.remove();
+        }
+        
+        // Parse response
+        const result = await verifyResponse.json();
+        
+        // Check for errors, even if status is 200
+        if (!result.success) {
+            throw new Error(result.message || 'Payment verification failed');
+        }
+        
+        // Redirect to success page if a redirect URL is provided
+        if (result.data && result.data.redirect_url) {
+            console.log('Redirecting to:', result.data.redirect_url);
+            window.location.href = result.data.redirect_url;
+            return;
+        }
+        
+        // Otherwise, show success message and receipt link (fallback to old behavior)
+        const successMsg = document.createElement('div');
+        successMsg.className = 'alert alert-success alert-dismissible fade show';
+        successMsg.innerHTML = 
+            '<strong>Payment Successful!</strong> Your donation has been processed. ' +
+            '<a href="' + result.data.receipt_url + '" target="_blank" class="alert-link">View Receipt</a>' +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.querySelector('.container').insertBefore(successMsg, document.querySelector('.container').firstChild);
+        
+        // Show detailed payment success in a modal
+        if (result.data) {
+            showDonationSuccess(result.data);
+        }
+    } catch (error) {
+        console.error('Payment verification error:', error);
+        
+        // Create a more user-friendly error message
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'alert alert-danger alert-dismissible fade show';
+        
+        // Check if the error contains a redirect URL (for login)
+        if (error.redirect) {
+            errorMsg.innerHTML = 
+                '<strong>Authentication Required:</strong> ' + error.message +
+                '<a href="' + error.redirect + '" class="btn btn-sm btn-primary ms-2">Login</a>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        } else {
+            errorMsg.innerHTML = 
+                '<strong>Payment Verification Failed:</strong> ' + (error.message || error) +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        }
+        
+        document.querySelector('.container').insertBefore(errorMsg, document.querySelector('.container').firstChild);
+    }
+}
+
+// Update donation goals
+async function updateDonationGoals() {
+    try {
+        const response = await fetch('/donations/goals');
+        const data = await response.json();
+        
+        if (data.success) {
+            const goalsContainer = document.querySelector('.donation-goals .row');
+            goalsContainer.innerHTML = data.data.map(goal => `
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${goal.title}</h5>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-${goal.color}" 
+                                     role="progressbar" 
+                                     style="width: ${goal.progress}%;" 
+                                     aria-valuenow="${goal.progress}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    ${goal.progress}%
+                                </div>
+                            </div>
+                            <p class="card-text">
+                                <span class="text-${goal.color}">₹${goal.current.toLocaleString()}</span> 
+                                raised of ₹${goal.goal.toLocaleString()} goal
+                            </p>
+                            <button class="btn btn-outline-${goal.color} btn-sm" 
+                                    onclick="quickDonate('${goal.title}')">
+                                Contribute
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error updating goals:', error);
+    }
+}
+
+// Show donation success modal
+function showDonationSuccess(paymentData) {
+    // Update receipt details
+    const modal = document.getElementById('donationSuccessModal');
+    
+    // Find elements by their new classes
+    const transactionIdElement = modal.querySelector('.donation-detail-item:nth-child(1) .detail-value');
+    const amountElement = modal.querySelector('.donation-detail-item:nth-child(2) .detail-value');
+    const dateElement = modal.querySelector('.donation-detail-item:nth-child(3) .detail-value');
+    const receiptLink = document.getElementById('receiptDownloadLink');
+    
+    // Format the amount with the Indian Rupee symbol
+    const formattedAmount = new Intl.NumberFormat('en-IN', {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 0
+    }).format(paymentData.amount);
+    
+    // Get payment ID from the payment data
+    const paymentId = paymentData.razorpay_payment_id || paymentData.transaction_id || paymentData.id || '';
+    
+    // Update the content
+    transactionIdElement.textContent = paymentId;
+    amountElement.textContent = `₹${formattedAmount}`;
+    dateElement.textContent = new Date().toLocaleString('en-IN');
+    
+    // Update receipt download link with the actual payment ID
+    if (receiptLink && paymentId) {
+        receiptLink.href = `/donations/receipt/${paymentId}`;
+    }
+    
+    // Show the modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// Show error message
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+    errorDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.container').firstChild);
+}
+
+// Reset donation form
+function resetDonationForm(donationId) {
+    const form = document.querySelector(`#donation_form_${donationId}`);
+    if (form) {
+        form.reset();
+    }
+}
+
+// Initialize real-time updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Update goals every 30 seconds
+    setInterval(updateDonationGoals, 30000);
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Update recent donations
+async function updateRecentDonations() {
+    try {
+        const response = await fetch('/donations/recent');
+        const data = await response.json();
+        
+        if (data.success) {
+            const donationsTable = document.getElementById('recentDonationsTable');
+            if (!donationsTable) return;
+            
+            // Update total donors
+            document.getElementById('totalDonors').textContent = data.total_donors || '0';
+            
+            // Update table rows
+            if (data.donations && data.donations.length > 0) {
+                donationsTable.innerHTML = data.donations.map(donation => `
+                    <tr>
+                        <td>${donation.date}</td>
+                        <td>${donation.is_anonymous ? '<em>Anonymous</em>' : `<span class="donor-name">${donation.donor_name}</span>`}
+                            ${donation.is_recurring ? '<span class="badge bg-info ms-2">Monthly</span>' : ''}
+                        </td>
+                        <td>${donation.type || ''}</td>
+                        <td>₹${donation.amount}</td>
+                        <td><span class="badge bg-success">Completed</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" 
+                                    onclick="viewDonationDetails('${donation.id}')"
+                                    data-bs-toggle="tooltip" 
+                                    title="View detailed information">
+                                <i class="fas fa-info-circle"></i> Details
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Reinitialize tooltips
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error updating recent donations:', error);
+    }
+}
+
+// JavaScript Function to Update Receipt Information
+function updateSuccessModal(data) {
+    try {
+        // Format the amount with Indian number formatting
+        const donationAmount = parseFloat(data.data.amount);
+        
+        // Update modal fields with transaction details
+        document.getElementById('receiptAmount').textContent = donationAmount.toLocaleString('en-IN');
+        document.getElementById('receiptTransactionId').textContent = data.data.transactionId;
+        document.getElementById('receiptDate').textContent = data.data.date;
+        
+        // Set donation type if available
+        if (data.data.donationType) {
+            document.getElementById('receiptDonationType').textContent = data.data.donationType;
+        } else {
+            // Try to get donation type name from the active donation card
+            const activeDonationCard = document.querySelector('.donation-card.active');
+            if (activeDonationCard) {
+                const donationName = activeDonationCard.querySelector('.donation-name').textContent;
+                document.getElementById('receiptDonationType').textContent = donationName;
+            } else {
+                document.getElementById('receiptDonationType').textContent = 'General';
+            }
+        }
+        
+        // Update receipt download link with the actual transaction ID
+        const receiptLink = document.getElementById('receiptDownloadLink');
+        if (receiptLink && data.data.transactionId) {
+            receiptLink.href = `/donations/receipt/${data.data.transactionId}`;
+        }
+        
+        // Show the success modal
+        const successModal = new bootstrap.Modal(document.getElementById('donationSuccessModal'));
+        successModal.show();
+        
+        console.log('Success modal displayed, ready for receipt download');
+        
+    } catch (error) {
+        console.error('Error updating success modal:', error);
+    }
+}
+</script>
+{% endblock %}

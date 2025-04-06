@@ -1,0 +1,906 @@
+{% extends "user/base.html" %}
+
+{% block title %}Home - Temple Management System{% endblock %}
+
+{% block styles %}
+<style>
+    /* Critical CSS only - moves non-critical styles to the end */
+    :root {
+        --sacred-gold: #D4AF37;
+        --sacred-red: #9D2235;
+        --sacred-orange: #FF7F00;
+        --deep-purple: #4A235A;
+    }
+
+    /* Hero Section - critical for first paint */
+    .hero-section {
+        background-image: url('/static/images/s1.jpg');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 15rem 0;
+        margin-top: -3rem;
+        text-align: center;
+        position: relative;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .hero-content {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: rgba(0,0,0,0.6);
+        padding: 4rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.2);
+        animation: fadeIn 1s ease-out;
+    }
+    
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+        text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+        color: #fff;
+        letter-spacing: 2px;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.6rem;
+        margin-bottom: 3rem;
+        opacity: 0.95;
+        text-shadow: 1px 2px 4px rgba(0,0,0,0.3);
+        font-weight: 500;
+        letter-spacing: 1px;
+        line-height: 1.6;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .hero-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .btn-primary {
+        background-color: var(--sacred-gold);
+        border: 2px solid var(--sacred-gold);
+        color: #fff;
+        padding: 1.2rem 3rem;
+        font-weight: 700;
+        font-size: 1.2rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.4s ease;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        background-color: #E5C14C;
+        border-color: #E5C14C;
+    }
+
+    .btn-primary:active {
+        transform: translateY(1px);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Basic responsive adjustments - critical */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 10rem 0;
+            margin-top: 2rem;
+            min-height: 60vh;
+        }
+        
+        .hero-title {
+            font-size: 2.8rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        .hero-content {
+            padding: 2.5rem;
+            margin: 0 1rem;
+        }
+
+        .btn-primary {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero-title {
+            font-size: 2.2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+
+        .hero-content {
+            padding: 2rem;
+        }
+
+        .btn-primary {
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+        }
+    }
+
+    .announcement-card:hover .announcement-icon-container i {
+        transform: scale(1.2);
+        transition: transform 0.3s ease;
+    }
+
+    .announcement-icon-container i {
+        transition: transform 0.3s ease;
+    }
+
+    /* Responsive Section Styles */
+    .section {
+        padding: 3rem 0;
+    }
+    
+    @media (max-width: 768px) {
+        .section {
+            padding: 2rem 0;
+        }
+    }
+    
+    .section-title {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        color: var(--text-color);
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 576px) {
+        .section-title {
+            font-size: 1.75rem;
+            margin-bottom: 2rem;
+        }
+    }
+    
+    /* Card Styles */
+    .announcement-card, .testimonial-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 100%;
+        background: #fff;
+    }
+    
+    .announcement-card:hover, .testimonial-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1.25rem;
+        }
+    }
+    
+    .card-title {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .card-text {
+        color: var(--text-color);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+    
+    /* Testimonial Specific Styles */
+    .testimonial-rating {
+        color: var(--accent-color);
+        font-weight: 600;
+    }
+    
+    .testimonial-text {
+        font-style: italic;
+        position: relative;
+        padding: 0.5rem 0;
+    }
+    
+    .testimonial-author {
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        padding-top: 1rem;
+    }
+    
+    .testimonial-author h5 {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    /* Grid Layout Improvements */
+    .row {
+        margin-right: -10px;
+        margin-left: -10px;
+    }
+    
+    .col-md-4 {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+    
+    @media (max-width: 768px) {
+        .mb-4 {
+            margin-bottom: 1.25rem !important;
+        }
+        
+        .row {
+            margin-right: -8px;
+            margin-left: -8px;
+        }
+        
+        .col-md-4 {
+            padding-right: 8px;
+            padding-left: 8px;
+        }
+    }
+    
+    /* Container Padding Adjustments */
+    .container {
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+    
+    @media (max-width: 576px) {
+        .container {
+            padding-right: 12px;
+            padding-left: 12px;
+        }
+    }
+    
+    /* Background Section Enhancement */
+    .bg-light {
+        background-color: #f8f9fa !important;
+        position: relative;
+    }
+    
+    .bg-light::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(0,0,0,0.1), transparent);
+    }
+
+    body {
+        width: 100%;
+        overflow-x: hidden;
+        max-width: 100%;
+    }
+    
+    .container-fluid {
+        width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
+        margin-right: auto;
+        margin-left: auto;
+    }
+    
+    #main-content, .main-content {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    section {
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Welcome to Sri Veeranjaneya Swamy Temple</h1>
+            <p class="hero-subtitle">A sacred place for spiritual rejuvenation and divine connection</p>
+            <div class="hero-buttons">
+                <a href="/temple-history" class="btn btn-primary">Temple History</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="main-content" class="w-100">
+    <!-- Announcements Section -->
+    <section class="section" id="announcements-section">
+        <div class="container">
+            <h2 class="section-title">Temple Announcements</h2>
+            <div class="row g-4">
+                {% for announcement in announcements %}
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card announcement-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ announcement.title }}</h5>
+                            <p class="card-text">{{ announcement.excerpt }}</p>
+                            <small class="text-muted">{{ announcement.date }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="section bg-light" id="testimonials-section">
+        <div class="container">
+            <h2 class="section-title">What Our Devotees Say</h2>
+            <div class="row g-4">
+                {% for testimonial in testimonials %}
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card testimonial-card h-100">
+                        <div class="card-body">
+                            <div class="testimonial-rating mb-2">
+                                {{ testimonial.title }}
+                            </div>
+                            <p class="testimonial-text mb-4">{{ testimonial.content }}</p>
+                            <div class="testimonial-author">
+                                <h5 class="mb-1">{{ testimonial.name }}</h5>
+                                <small class="text-muted">{{ testimonial.date }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center">
+                    <p>No testimonials available yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Google Reviews Section -->
+            <div class="mt-5">
+                <style>
+                    /* Google Reviews Styling */
+                    .google-reviews-container {
+                        max-height: 450px;
+                        overflow-y: auto;
+                        padding: 0.5rem;
+                    }
+                    
+                    .google-reviews-container::-webkit-scrollbar {
+                        width: 8px;
+                    }
+                    
+                    .google-reviews-container::-webkit-scrollbar-track {
+                        background: #f1f1f1;
+                        border-radius: 10px;
+                    }
+                    
+                    .google-reviews-container::-webkit-scrollbar-thumb {
+                        background: var(--sacred-gold);
+                        border-radius: 10px;
+                    }
+                    
+                    .google-reviews-container::-webkit-scrollbar-thumb:hover {
+                        background: #d4af37;
+                    }
+                    
+                    .review-item {
+                        border-radius: 8px;
+                        transition: all 0.2s ease;
+                        background-color: #fff;
+                    }
+                    
+                    .review-item:hover {
+                        background-color: #f8f9fa;
+                        transform: translateY(-2px);
+                    }
+                </style>
+                <h3 class="text-center mb-4">Our Google Reviews</h3>
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <!-- Google Reviews Widget -->
+                                <div class="google-reviews-container">
+                                    <!-- Review 1 -->
+                                    <div class="review-item mb-4 p-3 border-bottom">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">Jyothi Prasad</h6>
+                                                <div class="text-warning">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="mb-1">"A beautiful sculptured Anjaneya temple with a huge sculpture of Hanuman in stone. This is the centre of attraction where all visitors try to capture not only in their hearts but on their phones too. There is lot of space devoted where the devotees can sit and meditate."</p>
+                                        <small class="text-muted">8 months ago</small>
+                                    </div>
+                                    
+                                    <!-- Review 2 -->
+                                    <div class="review-item mb-4 p-3 border-bottom">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="rounded-circle bg-success d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">Ravi Kant</h6>
+                                                <div class="text-warning">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="mb-1">"Very peaceful place. Parking a four wheeler maybe challenging as it is inside a street from main road. A very tall Hanuman ji statue is main attraction which can be seen from the road itself. Other the main anjaneya temple, there are also smaller temples within the complex."</p>
+                                        <small class="text-muted">2 years ago</small>
+                                    </div>
+                                    
+                                    <!-- Review 3 -->
+                                    <div class="review-item p-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">Rohan Palkar</h6>
+                                                <div class="text-warning">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="mb-1">"Beautiful temple. Its surrounded by market and its by a road still you will peaceful when you go inside. Must visit!"</p>
+                                        <small class="text-muted">a year ago</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white text-center py-3">
+                                <p class="text-muted mb-2"><i class="fas fa-star text-warning"></i> 4.8/5 from 886 reviews</p>
+                                <a href="https://maps.app.goo.gl/MPNpMYPE4DnYSnCX9" target="_blank" class="btn btn-outline-primary">
+                                    <i class="fas fa-external-link-alt me-2"></i>View All Google Reviews
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials & Donations will be loaded via JS -->
+</div>
+
+<!-- Defer non-critical CSS until after the page has loaded -->
+<noscript id="deferred-styles">
+    <style>
+        /* General Styles */
+        .section {
+            padding: 3rem 0;
+        }
+        
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: 8px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary:hover {
+            background-color: #d4af37;
+            border-color: #d4af37;
+        }
+        
+        .btn-outline-light:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        /* Announcements Section */
+        .announcement-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .announcement-icon-container {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .announcement-icon-container.renovation {
+            background-color: var(--sacred-gold);
+        }
+        
+        .announcement-icon-container.priest {
+            background-color: var(--deep-purple);
+        }
+        
+        .announcement-icon-container.community {
+            background-color: var(--sacred-orange);
+        }
+        
+        .announcement-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .announcement-title {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .announcement-date {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        
+        .announcement-text {
+            margin-bottom: 1rem;
+            flex-grow: 1;
+        }
+        
+        .btn-link {
+            color: var(--sacred-gold);
+            text-decoration: none;
+            font-weight: 600;
+            align-self: flex-start;
+        }
+        
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Testimonial Cards */
+        .testimonial-card {
+            background: #fff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        /* Testimonials Section */
+        .testimonials-section {
+            background-color: #f8f9fa;
+        }
+        
+        .testimonial-card {
+            padding: 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            border-left: 3px solid var(--sacred-gold);
+        }
+        
+        .testimonial-info {
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 1rem;
+            margin-top: auto;
+        }
+        
+        .testimonial-content {
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            position: relative;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+        
+        .testimonial-content::before,
+        .testimonial-content::after {
+            content: '"';
+            font-size: 1.5rem;
+            color: var(--sacred-gold);
+        }
+        
+        .testimonial-author {
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+            color: var(--sacred-gold);
+            font-size: 1.2rem;
+        }
+        
+        .testimonial-title {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        
+        /* Donations Section */
+        .donation-card {
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .donation-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--sacred-gold);
+            margin-bottom: 0.8rem;
+        }
+        
+        .donation-name {
+            margin-bottom: 0.5rem;
+        }
+        
+        .donation-date {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        
+        .donation-cta {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        /* Add testimonial styles */
+        .testimonial-card {
+            background: #fff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .testimonial-rating {
+            color: var(--sacred-gold);
+            font-weight: 600;
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .testimonial-author {
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        .testimonial-author h5 {
+            color: var(--deep-purple);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</noscript>
+
+<script>
+    // Function to load deferred styles
+    const loadDeferredStyles = function() {
+        const addStylesNode = document.getElementById("deferred-styles");
+        const replacement = document.createElement("div");
+        replacement.innerHTML = addStylesNode.textContent;
+        document.body.appendChild(replacement);
+        addStylesNode.parentElement.removeChild(addStylesNode);
+    };
+    
+    // Load deferred styles on page load
+    window.addEventListener('load', loadDeferredStyles);
+    
+    // Pass Jinja templates data to JavaScript
+    const announcements = [
+    {% for announcement in announcements %}
+        {
+            id: {{ announcement.id }},
+            title: "{{ announcement.title }}",
+            excerpt: "{{ announcement.excerpt }}",
+            date: "{{ announcement.date }}",
+            image: "{{ announcement.image }}"
+        }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ];
+    
+    const events = [];
+    
+    const testimonials = [
+    {% for testimonial in testimonials %}
+        {
+            name: "{{ testimonial.name }}",
+            title: "{{ testimonial.title }}",
+            content: "{{ testimonial.content }}",
+            image: {{ loop.index }}
+        }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ];
+    
+    const donations = [
+    {% for donation in recent_donations %}
+        {
+            amount: "{{ donation.amount|default('0') }}",
+            name: "{{ donation.name|default('Anonymous') }}",
+            date: "{{ donation.date|default('Recent') }}"
+        }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ];
+    
+    // Function to load announcements
+    function loadAnnouncements() {
+        let html = '';
+        
+        // Define icon mapping for announcement types
+        const iconMap = {
+            'Temple Renovation Project': { icon: 'fa-solid fa-hammer', class: 'renovation' },
+            'New Chief Priest Appointment': { icon: 'fa-solid fa-user-tie', class: 'priest' },
+            'Community Service Initiative': { icon: 'fa-solid fa-hands', class: 'community' },
+            'default': { icon: 'fa-solid fa-bell', class: '' } // Default icon
+        };
+        
+        if (announcements.length > 0) {
+            html = '<div class="row">';
+            announcements.forEach(announcement => {
+                // Determine which icon to use based on the title
+                const iconInfo = iconMap[announcement.title] || iconMap['default'];
+                
+                html += `
+                <div class="col-md-4 mb-4">
+                    <div class="card announcement-card">
+                        <div class="announcement-icon-container ${iconInfo.class}">
+                            <i class="${iconInfo.icon}"></i>
+                        </div>
+                        <div class="announcement-content">
+                            <h5 class="announcement-title">${announcement.title}</h5>
+                            <div class="announcement-date">${announcement.date}</div>
+                            <p class="announcement-text">${announcement.excerpt}</p>
+                            <a href="#" class="btn-link">Read More</a>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+        } else {
+            html = '<div class="text-center"><p>No announcements at this time.</p></div>';
+        }
+        
+        document.getElementById('announcements-container').innerHTML = html;
+    }
+    
+    // Function to load testimonials and donations sections
+    function loadAdditionalSections() {
+        // Add testimonials section
+        let testimonialsHtml = `
+        <section class="section testimonials-section">
+            <div class="container">
+                <h2 class="section-title">What Devotees Say</h2>
+                <div class="row">`;
+                
+        testimonials.forEach(testimonial => {
+            testimonialsHtml += `
+            <div class="col-md-4 mb-4">
+                <div class="card testimonial-card">
+                    <p class="testimonial-content">${testimonial.content}</p>
+                    <div class="testimonial-info">
+                        <h5 class="testimonial-author">${testimonial.name}</h5>
+                        <div class="testimonial-title">${testimonial.title}</div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        
+        testimonialsHtml += `
+                </div>
+            </div>
+        </section>`;
+        
+        // Add donations section
+        let donationsHtml = `
+        <section class="section donations-section">
+            <div class="container">
+                <h2 class="section-title">Recent Donations</h2>
+                <div class="row">`;
+                
+        if (donations.length > 0) {
+            donations.forEach(donation => {
+                donationsHtml += `
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="card donation-card">
+                        <div class="donation-amount">₹${donation.amount}</div>
+                        <h5 class="donation-name">${donation.name}</h5>
+                        <div class="donation-date">${donation.date}</div>
+                    </div>
+                </div>`;
+            });
+        } else {
+            donationsHtml += `
+                <div class="col-12 text-center">
+                    <p>No recent donations. Be the first to contribute!</p>
+                </div>`;
+        }
+        
+        donationsHtml += `
+                </div>
+                <div class="donation-cta">
+                    <p>Your contributions help us maintain the temple and support our community initiatives.</p>
+                    <a href="/donations" class="btn btn-primary">Make a Donation</a>
+                </div>
+            </div>
+        </section>`;
+        
+        // Append both sections to main content
+        document.getElementById('main-content').insertAdjacentHTML('beforeend', testimonialsHtml);
+        document.getElementById('main-content').insertAdjacentHTML('beforeend', donationsHtml);
+    }
+    
+    // Load content progressively to improve perceived performance
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load critical content first
+        loadAnnouncements();
+        
+        // Load non-critical content after a delay
+        setTimeout(loadAdditionalSections, 100);
+    });
+</script>
+{% endblock %}

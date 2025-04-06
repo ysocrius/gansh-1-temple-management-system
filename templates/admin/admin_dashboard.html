@@ -1,0 +1,455 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Temple Management System</h1>
+        <p class="subtitle">Administration Dashboard</p>
+    </div>
+
+    <!-- Statistics Overview Section -->
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-icon events-icon">
+                <i class="fas fa-calendar"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Events</h3>
+                <div class="stat-number">{{ stats.events.total }}</div>
+                <div class="stat-label">Total Events</div>
+                <div class="stat-detail">{{ stats.events.upcoming }} Upcoming</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon sevas-icon">
+                <i class="fas fa-pray"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Sevas</h3>
+                <div class="stat-number">{{ stats.sevas.total_bookings }}</div>
+                <div class="stat-label">Total Bookings</div>
+                <div class="stat-detail">{{ stats.sevas.total_types }} Types</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon donations-icon">
+                <i class="fas fa-hand-holding-heart"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Donations</h3>
+                <div class="stat-number">{{ stats.donations.total_donations }}</div>
+                <div class="stat-label">Total Donations</div>
+                <div class="stat-detail">₹{{ stats.donations.total_amount }}</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon users-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Users</h3>
+                <div class="stat-number">{{ stats.users.total }}</div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-detail">{{ stats.users.verified }} Verified</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('general_admin.manage_events') }}" class="action-btn">
+                <i class="fas fa-calendar-plus"></i> Manage Events
+            </a>
+            <a href="{{ url_for('general_admin.manage_sevas') }}" class="action-btn">
+                <i class="fas fa-list"></i> Manage Sevas
+            </a>
+            <a href="{{ url_for('general_admin.manage_donations') }}" class="action-btn">
+                <i class="fas fa-donate"></i> Manage Donations
+            </a>
+            <a href="{{ url_for('general_admin.manage_users') }}" class="action-btn">
+                <i class="fas fa-users"></i> Manage Users
+            </a>
+            <a href="{{ url_for('general_admin.manage_testimonials') }}" class="action-btn">
+                <i class="fas fa-comments"></i> Manage Testimonials
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activities Section -->
+    <div class="recent-activities">
+        <div class="recent-section">
+            <h2>Recent Events</h2>
+            <div class="recent-list">
+                {% if stats.events.recent_events %}
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Date</th>
+                                <th>Venue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in stats.events.recent_events %}
+                            <tr>
+                                <td>{{ event.title }}</td>
+                                <td>{{ event.date_formatted }}</td>
+                                <td>{{ event.venue }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="no-data">No recent events found</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="recent-section">
+            <h2>Recent Donations</h2>
+            <div class="recent-list">
+                {% if stats.donations.recent_donations %}
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Donor</th>
+                                <th>Amount</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donation in stats.donations.recent_donations %}
+                            <tr>
+                                <td>{{ donation.name if donation.name else 'Anonymous' }}</td>
+                                <td>₹{{ donation.amount }}</td>
+                                <td>{{ donation.purpose if donation.purpose else 'General' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="no-data">No recent donations found</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="system-info">
+        <h2>System Information</h2>
+        <p>Last Updated: {{ current_time }}</p>
+        <p>Database Status: Connected</p>
+    </div>
+</div>
+
+<style>
+    /* Dashboard Styles */
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-header h1 {
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        color: #666;
+        font-size: 18px;
+    }
+
+    /* Statistics Cards */
+    .stats-overview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 30px;
+        justify-content: center;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 220px;
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 24px;
+        color: white;
+    }
+
+    .events-icon {
+        background-color: #4CAF50;
+    }
+
+    .sevas-icon {
+        background-color: #2196F3;
+    }
+
+    .donations-icon {
+        background-color: #FF9800;
+    }
+
+    .users-icon {
+        background-color: #9C27B0;
+    }
+
+    .stat-content h3 {
+        margin: 0 0 5px 0;
+        font-size: 16px;
+        color: #666;
+    }
+
+    .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #888;
+    }
+
+    .stat-detail {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .quick-actions h2 {
+        margin-top: 0;
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .action-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 12px 20px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: background-color 0.3s;
+        min-width: 180px;
+        justify-content: center;
+    }
+
+    .action-btn i {
+        margin-right: 8px;
+    }
+
+    .action-btn:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Recent Activities */
+    .recent-activities {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .recent-section {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .recent-section h2 {
+        margin-top: 0;
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .dashboard-table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .view-all {
+        display: block;
+        text-align: right;
+        margin-top: 10px;
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .view-all:hover {
+        text-decoration: underline;
+    }
+
+    .no-data {
+        color: #888;
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
+    }
+
+    /* System Info */
+    .system-info {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+
+    .system-info h2 {
+        margin-top: 0;
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .system-info p {
+        margin: 5px 0;
+        color: #666;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .stats-overview {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-card {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .recent-activities {
+            flex-direction: column;
+        }
+    }
+
+    /* Donation Goals Styles */
+    .fundraising-icon {
+        background-color: #E91E63;
+    }
+    
+    .donation-goals-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .goal-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        transition: transform 0.2s ease;
+    }
+    
+    .goal-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .goal-info h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+    }
+    
+    .goal-amounts {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    
+    .goal-progress {
+        font-weight: bold;
+        color: #444;
+    }
+    
+    .goal-target {
+        color: #777;
+    }
+    
+    .goal-description {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #666;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #f0f0f0;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "user/base.html" %}
+
+{% block title %}User Dashboard{% endblock %}
+
+{% block content %}
+    <h1>Welcome, {{ session.get('user_email', 'Guest') }}</h1>
+
+    <h2>Past Seva Bookings</h2>
+    {% if bookings %}
+        <table border="1">
+            <tr>
+                <th>Seva Type</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+            {% for booking in bookings %}
+            <tr>
+                <td>{{ booking.seva_type }}</td>
+                <td>{{ booking.date }}</td>
+                <td>Confirmed</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No past seva bookings found.</p>
+    {% endif %}
+
+    <h2>Your Donations</h2>
+    {% if donations %}
+        <table border="1">
+            <tr>
+                <th>Amount</th>
+                <th>Donation Date</th>
+                <th>Message</th>
+            </tr>
+            {% for donation in donations %}
+            <tr>
+                <td>₹{{ donation.amount }}</td>
+                <td>{{ donation.donation_date }}</td>
+                <td>{{ donation.message }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No donations found.</p>
+    {% endif %}
+
+    <h2>Actions</h2>
+    <a href="{{ url_for('user.book_seva') }}" class="home-button">Book a Seva</a>
+    <a href="{{ url_for('testimonials.submit_testimonial') }}" class="home-button">Submit Testimonial</a>
+    <a href="{{ url_for('user.logout') }}" class="home-button">Logout</a>
+
+{% endblock %}

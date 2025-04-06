@@ -1,0 +1,130 @@
+{% extends "user/base.html" %}
+
+{% block title %} Donation Payment Successful {% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow {% if error %}border-danger{% else %}border-success{% endif %}">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <span class="display-1 {% if error %}text-danger{% else %}text-success{% endif %}">
+                            <i class="fas {% if error %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+                        </span>
+                    </div>
+                    
+                    {% if error %}
+                        <h2 class="card-title mb-3">Error Processing Payment</h2>
+                        <p class="card-text mb-4">
+                            {{ error_message }}
+                        </p>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('donations.index') }}" class="btn btn-primary btn-lg">
+                                Return to Donations
+                            </a>
+                            {% if not is_public %}
+                            <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+                                Go to Dashboard
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <h2 class="card-title mb-3">Payment Successful!</h2>
+                        <p class="card-text mb-4">
+                            Your payment for <strong>{{ donation_type }}</strong> was processed successfully. 
+                            {% if not is_public %}
+                            <br>A confirmation email has been sent to your registered email address.
+                            {% endif %}
+                        </p>
+                        
+                        <div class="alert alert-light border mb-4">
+                            <div class="row">
+                                <div class="col-sm-6 text-start">
+                                    <p class="mb-1"><strong>Transaction ID:</strong></p>
+                                    <p class="mb-1"><strong>Amount:</strong></p>
+                                    <p class="mb-1"><strong>Date:</strong></p>
+                                    <p class="mb-0"><strong>Payment Method:</strong></p>
+                                </div>
+                                <div class="col-sm-6 text-end">
+                                    <p class="mb-1">{{ transaction_id }}</p>
+                                    <p class="mb-1">₹{{ amount }}</p>
+                                    <p class="mb-1">{{ payment_date }}</p>
+                                    <p class="mb-0">Online Payment</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p>
+                                <small class="text-muted">
+                                    <i class="fas fa-shield-alt me-1"></i> This payment was processed securely via Razorpay.
+                                </small>
+                            </p>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            {% if is_public %}
+                                <a href="{{ receipt_url }}" class="btn btn-success btn-lg mb-3" target="_blank">
+                                    <i class="fas fa-download me-2"></i> Download PDF Receipt
+                                </a>
+                                
+                                <a href="{{ url_for('donations.index') }}" class="btn btn-primary btn-lg">
+                                    Make Another Donation
+                                </a>
+                                
+                                {% if not is_public %}
+                                <a href="{{ url_for('user.login') }}" class="btn btn-outline-secondary">
+                                    Log In
+                                </a>
+                                {% endif %}
+                            {% else %}
+                                <a href="{{ url_for('donations.get_receipt', transaction_id=transaction_id) }}" class="btn btn-success btn-lg mb-3" target="_blank">
+                                    <i class="fas fa-download me-2"></i> Download PDF Receipt
+                                </a>
+                                
+                                <a href="{{ url_for('user.dashboard') }}" class="btn btn-primary btn-lg">
+                                    Go to Dashboard
+                                </a>
+                                
+                                <a href="{{ url_for('donations.index') }}" class="btn btn-outline-secondary">
+                                    Make Another Donation
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Receipt button styling */
+    .btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        background: linear-gradient(135deg, #20c997, #28a745);
+    }
+    
+    .btn-success:active {
+        transform: translateY(-1px);
+    }
+    
+    .btn-success i {
+        transition: transform 0.3s ease;
+    }
+    
+    .btn-success:hover i {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %} 

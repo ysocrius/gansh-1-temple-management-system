@@ -1,0 +1,23 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="error-page">
+                <h1 class="display-1 text-danger">404</h1>
+                <h2 class="mb-4">Page Not Found</h2>
+                <p class="lead mb-4">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+                <div class="error-actions">
+                    <a href="{{ url_for('general.home') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home me-2"></i>Go to Homepage
+                    </a>
+                    <a href="{{ url_for('donations.donation_details', donation_id=1) }}" class="btn btn-outline-primary btn-lg ms-3">
+                        <i class="fas fa-heart me-2"></i>Make a Donation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

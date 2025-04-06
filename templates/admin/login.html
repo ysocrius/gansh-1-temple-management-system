@@ -1,0 +1,200 @@
+{% extends "user/base.html" %}
+
+{% block title %}Admin Login{% endblock %}
+
+{% block styles %}
+<style>
+    .admin-login-container {
+        max-width: 450px;
+        margin: 4rem auto;
+    }
+    
+    .admin-login-card {
+        background: linear-gradient(135deg, #fff, #f8f5f0);
+        border-radius: 1rem;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        border-top: 5px solid var(--secondary-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .admin-login-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .admin-login-title {
+        color: var(--secondary-color);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-size: 2rem;
+        position: relative;
+        padding-bottom: 0.8rem;
+    }
+    
+    .admin-login-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background: var(--accent-color);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        border-radius: 0.5rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid #ddd;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(255, 127, 0, 0.25);
+    }
+    
+    .btn-admin-login {
+        background: linear-gradient(135deg, var(--secondary-color), #b03a4c);
+        border: none;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 600;
+        padding: 0.8rem 2rem;
+        width: 100%;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(157, 34, 53, 0.3);
+    }
+    
+    .btn-admin-login:hover {
+        background: linear-gradient(135deg, #b03a4c, var(--secondary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(157, 34, 53, 0.4);
+    }
+    
+    .error-message {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        padding: 0.8rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .password-toggle {
+        cursor: pointer;
+        color: var(--text-color);
+        transition: color 0.3s ease;
+    }
+    
+    .password-toggle:hover {
+        color: var(--primary-color);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+    
+    .forgot-password {
+        color: var(--text-color);
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .forgot-password:hover {
+        color: var(--secondary-color);
+        text-decoration: underline;
+    }
+    
+    .login-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container admin-login-container">
+    <div class="admin-login-card">
+        <h1 class="admin-login-title">Admin Login</h1>
+        
+        {% if message %}
+        <div class="error-message">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ message }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="/admin/login">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="username" name="username" required autofocus>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                    <span class="input-group-text password-toggle" onclick="togglePasswordVisibility()">
+                        <i class="fas fa-eye" id="togglePassword"></i>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="login-options">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="rememberMe" name="remember">
+                    <label class="form-check-label" for="rememberMe">
+                        Remember me
+                    </label>
+                </div>
+                
+                <a href="#" class="forgot-password">Forgot password?</a>
+            </div>
+            
+            <button type="submit" class="btn btn-admin-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Password Visibility Toggle JavaScript -->
+<script>
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('togglePassword');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+</script>
+
+<!-- Cache-Control to prevent back button access after login/logout -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}

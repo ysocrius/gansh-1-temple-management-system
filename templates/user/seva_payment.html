@@ -1,0 +1,184 @@
+{% extends "user/base.html" %}
+
+{% block title %} Payment for {{ seva.seva_name }} {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Complete Your Payment</h4>
+                        <span>₹{{ seva.seva_price }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle"></i> You're almost done! Click the "Pay Now" button to proceed with the payment.
+                    </div>
+                    
+                    <!-- Booking Summary -->
+                    <div class="mb-4">
+                        <h5 class="card-title">Booking Summary</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="30%">Seva Name</th>
+                                    <td>{{ seva.seva_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Seva Date</th>
+                                    <td>{{ booking.seva_date }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Amount</th>
+                                    <td>₹{{ seva.seva_price }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <td>{{ booking_id }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Payment Button -->
+                    <div class="d-grid gap-2">
+                        <button id="rzp-button" class="btn btn-primary btn-lg">
+                            <i class="fas fa-credit-card me-2"></i> Pay Now
+                        </button>
+                        <a href="{{ url_for('seva.seva_list_view') }}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                    
+                    <div class="mt-3 text-center small text-muted">
+                        <p>By proceeding with the payment, you agree to our terms and conditions.</p>
+                        <div class="mt-2">
+                            <i class="fas fa-lock me-1"></i> Secured by Razorpay
+                            <div class="mt-1">
+                                <i class="fab fa-cc-visa me-2"></i>
+                                <i class="fab fa-cc-mastercard me-2"></i>
+                                <i class="fab fa-cc-amex me-2"></i>
+                                <i class="fab fa-cc-diners-club"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Razorpay JavaScript SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('rzp-button').addEventListener('click', function(e) {
+        e.preventDefault();
+        initiateRazorpayPayment();
+    });
+    
+    async function initiateRazorpayPayment() {
+        try {
+            {% if order_id %}
+            // Use the order ID directly created on the server
+            openRazorpayCheckout("{{ order_id }}");
+            {% else %}
+            // Create Razorpay order
+            const response = await fetch('/seva/create-razorpay-order/{{ booking_id }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            });
+            
+            const orderData = await response.json();
+            if (!orderData.success) {
+                showError(orderData.message || 'Failed to create payment order');
+                return;
+            }
+            
+            openRazorpayCheckout(orderData.data.order_id);
+            {% endif %}
+        } catch (error) {
+            console.error('Error initiating payment:', error);
+            showError('An error occurred while initiating the payment process');
+        }
+    }
+    
+    function openRazorpayCheckout(orderId) {
+        // Open Razorpay checkout
+        const options = {
+            key: "{{ key_id }}",
+            amount: {{ seva.seva_price|float * 100 }}, 
+            currency: 'INR',
+            name: 'Shri Veeranjaneya Swamy Temple',
+            description: "{{ seva.seva_name }} Booking",
+            order_id: orderId,
+            handler: function(response) {
+                // On successful payment
+                verifyPayment(response);
+            },
+            prefill: {
+                name: "{{ user.name }}",
+                email: "{{ user.email }}",
+                contact: "{{ user.phone|default('') }}"
+            },
+            theme: {
+                color: '#3399cc'
+            }
+        };
+        
+        const razorpay = new Razorpay(options);
+        razorpay.on('payment.failed', function(response) {
+            showError(`Payment failed: ${response.error.description}`);
+        });
+        
+        razorpay.open();
+    }
+    
+    async function verifyPayment(response) {
+        try {
+            const verifyResponse = await fetch('/seva/verify-razorpay-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature
+                })
+            });
+            
+            const data = await verifyResponse.json();
+            if (data.success) {
+                // Redirect to success page
+                window.location.href = data.redirect_url;
+            } else {
+                showError(data.message || 'Payment verification failed');
+            }
+        } catch (error) {
+            console.error('Error verifying payment:', error);
+            showError('An error occurred while verifying your payment');
+        }
+    }
+    
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        errorDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(errorDiv, document.querySelector('.card-body').firstChild);
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,21 @@
+# Fix for requirements.txt - Update the pymongo requirement
+Flask
+pymongo[srv]==4.5.0
+flask-mail
+flask-session
+flask-wtf
+werkzeug
+razorpay
+authlib
+requests
+gunicorn==20.1.0
+python-dotenv
+bcrypt
+reportlab
+pillow
+flask-bcrypt
+dnspython
+certifi
+flask-login
+pyjwt
+passlib
