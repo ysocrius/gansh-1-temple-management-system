@@ -1,9 +1,11 @@
 from pymongo import MongoClient
 from bson.binary import Binary
+import os
 
 
 # ✅ Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
+mongo_uri = os.getenv("MONGO_URI", "mongodb+srv://24mscs25:yHDoxmEYf96ZEvrx@cluster0.ox5xbz4.mongodb.net/temple_system?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient(mongo_uri)
 db = client["temple_system"]
 
 # ✅ Define collections
