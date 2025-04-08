@@ -1,0 +1,72 @@
+flowchart TD
+    %% Page 2 of 3: Seva Management and Event Management
+    %% External Entities
+    Devotee([Devotee])
+    Admin([Administrator])
+    PaymentGateway([Payment Gateway])
+    EmailService([Email Service])
+
+    %% Data Stores
+    SevaDB[(Seva Database)]
+    EventDB[(Event Database)]
+    PaymentDB[(Payment Records)]
+    
+    %% Connection to other pages
+    UserManagement[/"From Page 1: User Management"\]
+    DonationManagement[/"From Page 1: Donation Management"\]
+    TestimonialManagement[/"To Page 3: Testimonial Management"\]
+    AdminManagement[/"To Page 3: Administrative Functions"\]
+
+    %% SEVA BOOKING PROCESSES
+    subgraph SevaManagement["3.0 Seva Management"]
+        SevaSelection["3.1 Seva Selection"]
+        DateSelection["3.2 Date Selection"]
+        SevaPayment["3.3 Seva Payment"]
+        BookingConfirmation["3.4 Booking Confirmation"]
+        BookingHistory["3.5 Booking History"]
+    end
+
+    %% EVENT MANAGEMENT PROCESSES
+    subgraph EventManagement["4.0 Event Management"]
+        EventCreation["4.1 Event Creation"]
+        EventListing["4.2 Event Listing"]
+        EventDetail["4.3 Event Detail Display"]
+        PastEventArchive["4.4 Past Event Archive"]
+    end
+
+    %% SEVA MANAGEMENT DATA FLOWS
+    Devotee -->|"Browse Sevas"| SevaSelection
+    SevaDB -->|"Seva Options"| SevaSelection
+    SevaSelection -->|"Selected Seva"| DateSelection
+    DateSelection -->|"Booking Details"| SevaPayment
+    SevaPayment -->|"Payment Request"| PaymentGateway
+    PaymentGateway -->|"Payment Page"| Devotee
+    Devotee -->|"Payment Confirmation"| PaymentGateway
+    PaymentGateway -->|"Payment Status"| SevaPayment
+    SevaPayment -->|"Store Booking"| SevaDB
+    SevaPayment -->|"Payment Record"| PaymentDB
+    SevaPayment -->|"Confirmation Request"| BookingConfirmation
+    BookingConfirmation -->|"Confirmation"| Devotee
+    BookingConfirmation -->|"Email Confirmation"| EmailService
+    EmailService -->|"Email with Details"| Devotee
+    Devotee -->|"History Request"| BookingHistory
+    SevaDB -->|"Booking Data"| BookingHistory
+    BookingHistory -->|"Booking Records"| Devotee
+
+    %% EVENT MANAGEMENT DATA FLOWS
+    Admin -->|"Event Data"| EventCreation
+    EventCreation -->|"Store Event"| EventDB
+    Devotee -->|"Browse Events"| EventListing
+    EventDB -->|"Event List"| EventListing
+    EventListing -->|"Events Display"| Devotee
+    Devotee -->|"Select Event"| EventDetail
+    EventDB -->|"Event Data"| EventDetail
+    EventDetail -->|"Event Details"| Devotee
+    EventDB -->|"Past Events"| PastEventArchive
+    PastEventArchive -->|"Archive Display"| Devotee
+    
+    %% Connections to other pages
+    UserManagement --> Devotee
+    DonationManagement --> PaymentGateway
+    Devotee --> TestimonialManagement
+    Admin --> AdminManagement

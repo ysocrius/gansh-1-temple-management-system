@@ -13,9 +13,10 @@ seva_collection = db["seva_collection"]  # Collection for storing seva bookings
 donations_collection = db["donations"]  # Collection for storing donations
 donations_list = db["donations_list"]
 events_collection = db["events"]  # Collection for storing events
+admin_log = db["admin_log"]  # Collection for storing admin login OTPs and audit logs
 
 # Ensure collections are accessible for imports
-__all__ = ["users_collection", "seva_collection", "seva_list" "donations_collection", "events_collection", "donations_list"]
+__all__ = ["users_collection", "seva_collection", "seva_list", "donations_collection", "events_collection", "donations_list", "admin_log"]
 
 # Sample structure for each collection:
 # Users Collection Example:

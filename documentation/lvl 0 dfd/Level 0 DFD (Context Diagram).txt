@@ -1,0 +1,21 @@
+flowchart TD
+    %% Central system process
+    TMS((Temple<br>Management<br>System))
+    
+    %% External Entities positioned in square formation
+    Devotee([Devotee]) 
+    Admin([Admin])
+    Payment([Payment<br>Gateway])
+    Email([Email<br>Service])
+    
+    %% Positioning to form a square
+    Devotee --- TMS
+    Admin --- TMS
+    Payment --- TMS
+    Email --- TMS
+    
+    %% Using bidirectional flows to reduce number of lines
+    Devotee <-->|"Register/Login<br>Donations/Bookings"| TMS
+    TMS <-->|"Reports/Approvals<br>User Management"| Admin
+    TMS <-->|"Payment Requests<br>Confirmations"| Payment
+    TMS <-->|"Notifications<br>Receipts"| Email

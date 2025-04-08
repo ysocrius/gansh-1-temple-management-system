@@ -1,0 +1,88 @@
+flowchart TD
+    %% Page 1 of 3: User Management and Donation Management
+    %% External Entities
+    Devotee([Devotee])
+    Admin([Administrator])
+    PaymentGateway([Payment Gateway])
+    EmailService([Email Service])
+
+    %% Data Stores
+    UserDB[(User Database)]
+    DonationDB[(Donation Database)]
+    PaymentDB[(Payment Records)]
+    
+    %% Connection to other pages
+    SevaManagement[/"To Page 2: Seva Management"\]
+    EventManagement[/"To Page 2: Event Management"\]
+    TestimonialManagement[/"To Page 3: Testimonial Management"\]
+    AdminManagement[/"To Page 3: Administrative Functions"\]
+
+    %% USER MANAGEMENT PROCESSES
+    subgraph UserManagement["1.0 User Management"]
+        Registration["1.1 User Registration"]
+        Verification["1.2 Email Verification"]
+        Authentication["1.3 Authentication"]
+        PasswordReset["1.4 Password Reset"]
+        Profile["1.5 Profile Management"]
+        GoogleAuth["1.6 Google OAuth"]
+    end
+
+    %% DONATION PROCESSES
+    subgraph DonationManagement["2.0 Donation Management"]
+        DonationForm["2.1 Donation Form Processing"]
+        PaymentInitiation["2.2 Payment Initiation"]
+        PaymentVerification["2.3 Payment Verification"]
+        ReceiptGeneration["2.4 Receipt Generation"]
+        DonationHistory["2.5 Donation History Tracking"]
+    end
+
+    %% USER MANAGEMENT DATA FLOWS
+    Devotee -->|"Registration Data"| Registration
+    Registration -->|"Store User"| UserDB
+    Registration -->|"Verification Request"| Verification
+    Verification -->|"Send Email"| EmailService
+    EmailService -->|"Verification Link"| Devotee
+    Devotee -->|"Verification Token"| Verification
+    Verification -->|"Update Status"| UserDB
+
+    Devotee -->|"Login Credentials"| Authentication
+    Authentication -->|"Validate User"| UserDB
+    UserDB -->|"User Data"| Authentication
+    Authentication -->|"Session Token"| Devotee
+
+    Devotee -->|"Reset Request"| PasswordReset
+    PasswordReset -->|"Send OTP"| EmailService
+    EmailService -->|"Reset Code"| Devotee
+    Devotee -->|"New Password + OTP"| PasswordReset
+    PasswordReset -->|"Update Password"| UserDB
+
+    Devotee -->|"OAuth Request"| GoogleAuth
+    GoogleAuth -->|"Google Auth Flow"| Devotee
+    GoogleAuth -->|"User Data"| UserDB
+
+    Devotee -->|"Profile Updates"| Profile
+    Profile -->|"Update Data"| UserDB
+
+    %% DONATION MANAGEMENT DATA FLOWS
+    Devotee -->|"Donation Details"| DonationForm
+    DonationForm -->|"Payment Request"| PaymentInitiation
+    PaymentInitiation -->|"Create Order"| PaymentGateway
+    PaymentGateway -->|"Payment Page"| Devotee
+    Devotee -->|"Payment Confirmation"| PaymentGateway
+    PaymentGateway -->|"Payment Status"| PaymentVerification
+    PaymentVerification -->|"Store Transaction"| DonationDB
+    PaymentVerification -->|"Payment Record"| PaymentDB
+    PaymentVerification -->|"Receipt Request"| ReceiptGeneration
+    ReceiptGeneration -->|"Receipt"| Devotee
+    ReceiptGeneration -->|"Email Receipt"| EmailService
+    EmailService -->|"Email with Receipt"| Devotee
+    Devotee -->|"History Request"| DonationHistory
+    DonationDB -->|"Donation Data"| DonationHistory
+    DonationHistory -->|"Donation Records"| Devotee
+    
+    %% Connections to other pages
+    Devotee --> SevaManagement
+    Devotee --> EventManagement
+    Devotee --> TestimonialManagement
+    Admin --> AdminManagement
+    PaymentGateway --> SevaManagement

@@ -1,0 +1,72 @@
+flowchart TD
+    %% Page 3 of 3: Testimonial Management and Administrative Functions
+    %% External Entities
+    Devotee([Devotee])
+    Admin([Administrator])
+
+    %% Data Stores
+    UserDB[(User Database)]
+    DonationDB[(Donation Database)]
+    SevaDB[(Seva Database)]
+    EventDB[(Event Database)]
+    TestimonialDB[(Testimonial Database)]
+    PaymentDB[(Payment Records)]
+    
+    %% Connection to other pages
+    UserManagement[/"From Page 1: User Management"\]
+    DonationManagement[/"From Page 1: Donation Management"\]
+    SevaManagement[/"From Page 2: Seva Management"\]
+    EventManagement[/"From Page 2: Event Management"\]
+
+    %% TESTIMONIAL PROCESSES
+    subgraph TestimonialManagement["5.0 Testimonial Management"]
+        TestimonialSubmission["5.1 Testimonial Submission"]
+        TestimonialReview["5.2 Testimonial Review"]
+        TestimonialDisplay["5.3 Testimonial Display"]
+    end
+
+    %% ADMIN PROCESSES
+    subgraph AdminManagement["6.0 Administrative Functions"]
+        UserAdmin["6.1 User Administration"]
+        DonationAdmin["6.2 Donation Management"]
+        SevaAdmin["6.3 Seva Management"]
+        EventAdmin["6.4 Event Management"]
+        TestimonialAdmin["6.5 Testimonial Administration"]
+    end
+
+    %% TESTIMONIAL MANAGEMENT DATA FLOWS
+    Devotee -->|"Testimonial Data"| TestimonialSubmission
+    TestimonialSubmission -->|"Store Testimonial"| TestimonialDB
+    Admin -->|"Review Request"| TestimonialReview
+    TestimonialDB -->|"Pending Testimonials"| TestimonialReview
+    TestimonialReview -->|"Update Status"| TestimonialDB
+    Devotee -->|"View Testimonials"| TestimonialDisplay
+    TestimonialDB -->|"Approved Testimonials"| TestimonialDisplay
+    TestimonialDisplay -->|"Testimonial Display"| Devotee
+
+    %% ADMIN MANAGEMENT DATA FLOWS
+    Admin -->|"User Management"| UserAdmin
+    UserDB -->|"User Data"| UserAdmin
+    UserAdmin -->|"User Updates"| UserDB
+
+    Admin -->|"Donation Reports"| DonationAdmin
+    DonationDB -->|"Donation Data"| DonationAdmin
+    PaymentDB -->|"Payment Data"| DonationAdmin
+
+    Admin -->|"Seva Management"| SevaAdmin
+    SevaDB -->|"Seva Data"| SevaAdmin
+    SevaAdmin -->|"Seva Updates"| SevaDB
+
+    Admin -->|"Event Management"| EventAdmin
+    EventDB -->|"Event Data"| EventAdmin
+    EventAdmin -->|"Event Updates"| EventDB
+
+    Admin -->|"Testimonial Management"| TestimonialAdmin
+    TestimonialDB -->|"Testimonial Data"| TestimonialAdmin
+    TestimonialAdmin -->|"Status Updates"| TestimonialDB
+    
+    %% Connections to other pages
+    UserManagement --> Devotee
+    DonationManagement --> Devotee
+    SevaManagement --> Devotee
+    EventManagement --> Devotee

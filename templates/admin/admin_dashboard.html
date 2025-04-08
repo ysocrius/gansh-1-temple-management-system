@@ -79,6 +79,9 @@
             <a href="{{ url_for('general_admin.manage_testimonials') }}" class="action-btn">
                 <i class="fas fa-comments"></i> Manage Testimonials
             </a>
+            <a href="{{ url_for('admin.maintenance_settings') }}" class="action-btn maintenance-btn">
+                <i class="fas fa-tools"></i> Maintenance Mode
+            </a>
         </div>
     </div>
 
@@ -450,6 +453,15 @@
         height: 8px;
         border-radius: 4px;
         background-color: #f0f0f0;
+    }
+    
+    /* Maintenance Mode Button */
+    .maintenance-btn {
+        background-color: #dc3545;
+    }
+    
+    .maintenance-btn:hover {
+        background-color: #bd2130;
     }
 </style>
 {% endblock %}

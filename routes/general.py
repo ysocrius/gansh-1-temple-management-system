@@ -256,3 +256,16 @@ def check_session():
         'session': dict(session),
         'authenticated': is_authenticated
     })
+
+@general_bp.route("/maintenance-preview")
+def preview_maintenance():
+    """Preview the maintenance page"""
+    maintenance_end_time = current_app.config.get("MAINTENANCE_END_TIME", "24 hours")
+    return render_template("user/maintainence.html", completion_time=maintenance_end_time)
+
+@general_bp.route("/test-maintenance-page")
+def test_maintenance_page():
+    """A route to test the maintenance page without enabling maintenance mode"""
+    from flask import current_app
+    maintenance_end_time = current_app.config.get("MAINTENANCE_END_TIME", "24 hours")
+    return render_template("user/maintainence.html", completion_time=maintenance_end_time)

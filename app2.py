@@ -17,6 +17,20 @@ app = Flask(__name__)
 # Load configuration from Config class
 app.config.from_object(Config)
 
+# Load maintenance mode status from file if exists
+try:
+    import json
+    maintenance_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'maintenance_status.json')
+    if os.path.exists(maintenance_file):
+        with open(maintenance_file, 'r') as f:
+            maintenance_data = json.load(f)
+            app.config["MAINTENANCE_MODE"] = maintenance_data.get("maintenance_mode", False)
+            if "end_time" in maintenance_data and maintenance_data["end_time"]:
+                app.config["MAINTENANCE_END_TIME"] = maintenance_data["end_time"]
+        logger.info(f"Loaded maintenance mode status: {app.config.get('MAINTENANCE_MODE')}")
+except Exception as e:
+    logger.error(f"Error loading maintenance status: {str(e)}")
+
 # Initialize CSRF protection
 csrf = CSRFProtect(app)
 
@@ -112,6 +126,44 @@ def log_request_info():
         if not g._session_check:
             logger.error('Session test failed!')
 
+# Maintenance mode middleware
+@app.before_request
+def check_maintenance_mode():
+    """Check if the application is in maintenance mode and handle accordingly"""
+    # Skip this middleware for OPTIONS requests (for CORS preflight)
+    if request.method == 'OPTIONS':
+        return None
+        
+    # Skip check if maintenance mode is not enabled
+    if not app.config.get('MAINTENANCE_MODE', False):
+        return None
+        
+    # Print for debugging - remove in production
+    logger.debug(f'Maintenance mode check for path: {request.path}, IP: {request.remote_addr}')
+    
+    # Allow bypassing by specific IPs (e.g., admin IPs)
+    client_ip = request.remote_addr
+    if client_ip in app.config.get('MAINTENANCE_BYPASS_IPS', []):
+        logger.debug(f'Maintenance mode bypass for IP: {client_ip}')
+        return None
+        
+    # Check if the path should bypass maintenance mode
+    bypass_paths = app.config.get('MAINTENANCE_BYPASS_PATHS', [])
+    for path in bypass_paths:
+        if request.path.startswith(path):
+            logger.debug(f'Maintenance mode bypass for path: {request.path} (matches {path})')
+            return None
+            
+    # Check if the user is an admin
+    if 'admin' in session and session['admin'] == True:
+        logger.debug('Maintenance mode bypass for admin user')
+        return None
+            
+    # If we get here, show the maintenance page
+    logger.info(f'Maintenance mode active, redirecting {request.path} to maintenance page')
+    maintenance_end_time = app.config.get('MAINTENANCE_END_TIME', '24 hours')
+    return render_template('user/maintainence.html', completion_time=maintenance_end_time), 503
+
 @app.after_request
 def after_request(response):
     logger.debug('Response Status: %s', response.status)
@@ -153,6 +205,38 @@ from database import client  # Ensure MongoDB is initialized
 @app.route('/test')
 def test_route():
     return jsonify({"status": "success", "message": "Flask server is working"})
+
+# Add test route for checking maintenance mode
+@app.route('/test-maintenance')
+def test_maintenance():
+    """Route to test maintenance mode status"""
+    maintenance_mode = app.config.get("MAINTENANCE_MODE", False)
+    maintenance_end_time = app.config.get("MAINTENANCE_END_TIME", "24 hours")
+    bypass_ips = app.config.get("MAINTENANCE_BYPASS_IPS", ["127.0.0.1"])
+    bypass_paths = app.config.get("MAINTENANCE_BYPASS_PATHS", [])
+    
+    # Check if we're in maintenance mode
+    if maintenance_mode:
+        # If this endpoint is being accessed, it means either:
+        # 1. We're not in maintenance mode
+        # 2. The user is an admin
+        # 3. The user's IP is in the bypass list
+        # 4. This path is in the bypass list
+        return jsonify({
+            "maintenance_mode": True,
+            "message": "Maintenance mode is ACTIVE but you're seeing this because you're bypassing it",
+            "end_time": maintenance_end_time,
+            "bypass_ips": bypass_ips,
+            "bypass_paths": bypass_paths,
+            "user_ip": request.remote_addr,
+            "is_admin": 'admin' in session and session['admin'] == True
+        })
+    else:
+        return jsonify({
+            "maintenance_mode": False,
+            "message": "Maintenance mode is NOT active",
+            "your_ip": request.remote_addr
+        })
 
 # Add authentication check endpoint
 @app.route('/check-auth')

@@ -1,0 +1,333 @@
+# Temple Management System - ER Diagram Components
+
+## 1. Subsystems Overview
+
+### 1.1 Core Subsystems
+1. User Management Subsystem
+2. Donation Management Subsystem
+3. Seva Booking Subsystem
+4. Event Management Subsystem
+5. Feedback Subsystem
+6. Financial Transaction Subsystem
+7. Notification Management Subsystem
+8. Admin Management Subsystem 
+
+### 1.2 Integration Notes
+- Content Management integrated into respective subsystems
+- Analytics/Reporting integrated within each subsystem
+- Priest role removed, only User and Admin roles maintained
+
+## 2. Entity Relationships and Attributes
+
+### 2.1 User Management Subsystem
+```
+User {
+    user_id: UUID (PK)
+    email: VARCHAR(255) UNIQUE NOT NULL
+    password_hash: VARCHAR(255) NOT NULL
+    role_id: UUID (FK) REFERENCES Role(role_id) ON DELETE RESTRICT
+    is_active: BOOLEAN DEFAULT true
+    is_deleted: BOOLEAN DEFAULT false
+    created_at: TIMESTAMP
+    updated_at: TIMESTAMP
+    deleted_at: TIMESTAMP NULL
+}
+
+Role {
+    role_id: UUID (PK)
+    role_name: ENUM('admin', 'user') NOT NULL
+    description: TEXT
+    created_at: TIMESTAMP
+}
+
+UserProfile {
+    profile_id: UUID (PK)
+    user_id: UUID (FK) REFERENCES User(user_id) ON DELETE CASCADE
+    first_name: VARCHAR(50)
+    last_name: VARCHAR(50)
+    phone: VARCHAR(15)
+    address: TEXT
+    city: VARCHAR(100)
+    state: VARCHAR(100)
+    country: VARCHAR(100)
+    pincode: VARCHAR(10)
+    profile_picture: VARCHAR(255)
+    is_deleted: BOOLEAN DEFAULT false
+}
+```
+
+### 2.2 Seva Booking Subsystem
+```
+SevaBooking {
+    booking_id: UUID (PK)
+    user_id: UUID (FK)
+    seva_type_id: UUID (FK)
+    booking_date: DATE
+    seva_date: DATE
+    status: ENUM('pending', 'confirmed', 'cancelled')
+    amount: DECIMAL(10,2)
+    notes: TEXT
+    is_deleted: BOOLEAN DEFAULT false
+    created_at: TIMESTAMP
+    updated_at: TIMESTAMP
+    deleted_at: TIMESTAMP NULL
+    UNIQUE(user_id, seva_type_id, seva_date)
+}
+```
+
+### 2.3 Donation Management Subsystem
+```
+Donation {
+    donation_id: UUID (PK)
+    user_id: UUID (FK)
+    donation_type_id: UUID (FK)
+    amount: DECIMAL(10,2)
+    is_anonymous: BOOLEAN
+    status: ENUM('pending', 'completed', 'failed')
+    is_deleted: BOOLEAN DEFAULT false
+    created_at: TIMESTAMP
+    deleted_at: TIMESTAMP NULL
+}
+```
+
+### 2.4 Financial Transaction Subsystem
+```
+Transaction {
+    transaction_id: UUID (PK)
+    reference_id: UUID (FK)
+    reference_type: ENUM('seva', 'donation', 'event')
+    amount: DECIMAL(10,2)
+    payment_method: VARCHAR(50)
+    payment_status: ENUM('pending', 'success', 'failed')
+    transaction_date: TIMESTAMP
+    razorpay_payment_id: VARCHAR(255)
+    is_deleted: BOOLEAN DEFAULT false
+    UNIQUE(reference_id, reference_type)
+}
+
+Receipt {
+    receipt_id: UUID (PK)
+    transaction_id: UUID (FK)
+    receipt_number: VARCHAR(50) UNIQUE
+    generated_date: TIMESTAMP
+    pdf_url: VARCHAR(255)
+    is_deleted: BOOLEAN DEFAULT false
+}
+```
+
+### 2.5 Event Management Subsystem
+```
+EventRegistration {
+    registration_id: UUID (PK)
+    event_id: UUID (FK)
+    user_id: UUID (FK)
+    registration_date: TIMESTAMP
+    status: ENUM('registered', 'attended', 'cancelled')
+    is_deleted: BOOLEAN DEFAULT false
+    UNIQUE(user_id, event_id)
+}
+```
+
+### 2.6 Feedback Subsystem
+```
+Testimonial {
+    testimonial_id: UUID (PK)
+    user_id: UUID (FK)
+    content: TEXT
+    rating: INTEGER CHECK (rating BETWEEN 1 AND 5)
+    status: ENUM('pending', 'approved', 'rejected')
+    is_deleted: BOOLEAN DEFAULT false
+    created_at: TIMESTAMP
+    moderated_at: TIMESTAMP NULL
+}
+```
+
+### 2.7 Notification Management Subsystem
+```
+NotificationQueue {
+    notification_id: UUID (PK)
+    user_id: UUID (FK)
+    type: ENUM('email', 'sms', 'in_app')
+    template_id: UUID (FK)
+    status: ENUM('pending', 'sent', 'failed')
+    content: JSON
+    scheduled_at: TIMESTAMP
+    sent_at: TIMESTAMP NULL
+    is_deleted: BOOLEAN DEFAULT false
+    UNIQUE(user_id, template_id, scheduled_at)
+}
+```
+
+### 2.8 Admin Management Subsystem
+```
+AdminDashboard {
+    dashboard_id: UUID (PK)
+    admin_id: UUID (FK) REFERENCES User(user_id) ON DELETE RESTRICT
+    last_accessed: TIMESTAMP
+    preferences: JSON
+    layout_config: JSON
+    widgets_config: JSON
+    last_export_date: TIMESTAMP NULL
+}
+
+ActivityLog {
+    log_id: UUID (PK)
+    user_id: UUID (FK) REFERENCES User(user_id) ON DELETE SET NULL
+    action_type: ENUM('create', 'update', 'delete', 'view', 'approve', 'reject', 'export')
+    entity_type: VARCHAR(50)
+    entity_id: UUID
+    details: JSON
+    ip_address: VARCHAR(45)
+    created_at: TIMESTAMP
+    status: ENUM('success', 'failed', 'pending')
+    error_message: TEXT NULL
+}
+
+AnalyticsData {
+    analytics_id: UUID (PK)
+    metric_type: ENUM(
+        'user_engagement',
+        'donations',
+        'seva_bookings',
+        'events',
+        'revenue',
+        'user_growth',
+        'donation_trends',
+        'seva_popularity',
+        'event_participation',
+        'payment_success_rate',
+        'user_retention',
+        'peak_hours',
+        'geographical_distribution'
+    )
+    metric_value: JSON
+    time_period: VARCHAR(20)
+    created_at: TIMESTAMP
+    data_points: JSON
+    comparison_period: VARCHAR(20) NULL
+    is_realtime: BOOLEAN DEFAULT false
+}
+
+DataExport {
+    export_id: UUID (PK)
+    admin_id: UUID (FK) REFERENCES User(user_id) ON DELETE SET NULL
+    export_type: ENUM('users', 'donations', 'sevas', 'events', 'transactions', 'all')
+    status: ENUM('queued', 'processing', 'completed', 'failed')
+    file_url: VARCHAR(255)
+    created_at: TIMESTAMP
+    completed_at: TIMESTAMP NULL
+    format: ENUM('csv', 'pdf', 'excel') DEFAULT 'csv'
+    date_range: JSON
+    filters: JSON
+    row_count: INTEGER
+    file_size: INTEGER
+}
+
+AdminSettings {
+    setting_id: UUID (PK)
+    admin_id: UUID (FK) REFERENCES User(user_id) ON DELETE CASCADE
+    setting_key: VARCHAR(100)
+    setting_value: JSON
+    created_at: TIMESTAMP
+    updated_at: TIMESTAMP
+    is_global: BOOLEAN DEFAULT false
+}
+```
+
+## 3. Access Control
+
+### 3.1 Admin Permissions
+- Full CRUD access to all entities
+- Approve/Reject testimonials
+- Manage seva types and schedules
+- View all user profiles
+- Access to analytics dashboard
+- Manage donation goals
+- Configure notification templates
+- View all transactions
+- Generate reports
+
+### 3.2 User Permissions
+- Read-only access to seva types and schedules
+- Create/View own seva bookings
+- Create/View own donations
+- View/Update own profile
+- Submit testimonials
+- Register for events
+- View own transactions
+- View own notifications
+
+## 4. Validation Rules
+
+### 4.1 User Management
+- Email must be unique and valid format
+- Password must be at least 8 characters with 1 uppercase, 1 lowercase, 1 number
+- Phone numbers must be valid format
+- Pincode must be valid format for country
+
+### 4.2 Financial
+- Transaction amount must be positive
+- Payment status transitions must follow valid flow
+- Reference IDs must exist in respective tables
+- No deletion of completed transactions (soft delete only)
+
+### 4.3 Seva/Donation
+- Booking date must be future date
+- Seva date must be within temple operating hours
+- Donation amount must meet minimum requirement
+- Anonymous donations must hide user details in public views
+
+### 4.4 Event
+- Event capacity validation
+- Registration deadline validation
+- No duplicate registrations
+- Valid event date ranges 
+
+## 5. Foreign Key Constraints
+
+### 5.1 Cascade Rules
+- UserProfile: CASCADE on User deletion
+- SevaBooking: RESTRICT on User deletion
+- Donation: RESTRICT on User deletion
+- EventRegistration: RESTRICT on User deletion
+- Transaction: RESTRICT on reference deletion
+- Receipt: CASCADE on Transaction deletion
+- NotificationQueue: CASCADE on User deletion
+- ActivityLog: SET NULL on User deletion
+- DataExport: SET NULL on User deletion
+
+### 5.2 Additional Status Types
+
+SevaBooking Status:
+- 'pending'
+- 'confirmed'
+- 'cancelled'
+- 'completed'
+- 'rescheduled'
+
+Donation Status:
+- 'pending'
+- 'completed'
+- 'failed'
+- 'refunded'
+
+Transaction Status:
+- 'pending'
+- 'success'
+- 'failed'
+- 'refunded'
+- 'partially_refunded'
+
+Event Registration Status:
+- 'registered'
+- 'attended'
+- 'cancelled'
+- 'waitlisted'
+- 'no_show'
+
+Notification Status:
+- 'pending'
+- 'sent'
+- 'failed'
+- 'delivered'
+- 'read' 

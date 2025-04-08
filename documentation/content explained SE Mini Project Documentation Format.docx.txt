@@ -1,0 +1,355 @@
+﻿PROJECT REPORT ON
+“Title of the Project”
+Submitted in partial fulfillment of the requirements for Software Engineering Mini Project Lab for 2nd Semester 
+
+
+Master of Computer Science
+
+
+Submitted by 
+Student Name1                Register Number1
+Student Name2                Register Number2
+
+
+
+
+Under the guidance of
+
+
+Dr. Velmurugan R
+________________
+
+
+  
+
+
+
+CERTIFICATE
+
+
+This is to certify that the project titled “Title of the Project” has been satisfactorily completed by Mr. / Ms. Student Name with Reg. No. Ur Reg. No., in partial fulfillment of the requirements for Software Engineering Mini Project Lab with course code MCC2P2B21, for the 2nd Semester M.Sc., CS course during the academic year 2024-2026 as prescribed by Bangalore North University.
+
+
+Faculty In-charge                                                        Head of the Department
+        
+Valued by                                                        
+Examiner 1:_______________________                            Date:        
+Examiner 2:_______________________                        Centre: Kristu Jayanti College        
+________________
+
+
+
+
+ACKNOWLEDGEMENT
+
+
+First of all, we would like to thank the God Almighty for all the blessings he has showered on us. Our spiritual quotient gave us more strength and motivation that helped immensely.
+
+
+We would like to thank Rev. Fr. Dr. Augustine George, our esteemed Principal, for providing us their constant guidance and support. I would also like to thank     Rev. Fr. Lijo P Thomas, our Vice-Principal and Chief Finance Officer, for providing us with the best facilities.
+
+
+We are extremely thankful to our Dr. Kumar R, Head, Department of Computer Science (PG) for giving us the essential support in the form of allocating comfortable project hours and necessary software resources.
+
+
+We would like to extend our heartfelt thanks to Dr. Velmurugan R, our project guide for providing us the necessary details related to project development and process identification enabling us to finish the project within the stipulated time.
+
+
+We thank all other faculty members who helped us a lot in completing this project. 
+
+
+We thank our class mates, who have pointed out errors and guided us a lot and we thank each and every one who has helped us.
+
+
+
+
+
+
+Synopsis
+________________
+
+
+
+
+CONTENTS (80 pages minimum)
+SI. No.
+1.
+
+
+
+
+2.
+
+
+
+
+
+
+
+
+3.
+
+
+
+
+4.
+
+
+
+
+
+
+
+
+5.
+
+
+
+
+
+
+6.
+7.
+8.
+9.
+10.
+11.
+	Particulars
+Introduction 
+   1. System Definition
+   2. Project Description min 6 pages
+System Study
+2.1 Existing System (manual records, no system existed)
+2.2 Proposed System (w tur planning to do; wt u developing)
+2.3 Data Flow Diagram (lvl 2 dfd for all modules combined in single diag)
+2.4 ER Diagram ()
+System Configuration
+3.1 Hardware Configuration (develpment and minm configrn of  deployment)
+3.2 Software Configuration (frontend, backend, report generation; tools used for report genern ; its version; its name; explain the tools for frontend, backend, report generation;)
+Details of Software
+4.1 Overview of Front End (frontend, backend, report generation; tools used for report genern ; its version; its name; explain the tools for frontend, backend, report generation;)
+4.2 Overview of Back End (frontend, backend, report generation; tools used for report genern ; its version; its name; explain the tools for frontend, backend, report generation; tables for Db and queries)
+
+
+
+
+
+
+
+
+System Design
+5.1 Architectural Design (architecture design; MVC - model view control architecture; )
+
+
+5.2 Input Design (form structure screen shots; forms without the data like skeleton;)
+5.3 Output Design ()output of form
+5.4 Database Design (scr of tables)
+Source Code (limited code with functionalities)
+Testing (sys testing, unit testing; only wt we have done)
+Implementation (WT u did to deploy the project)
+Screen Shot (all forms with data; if prj is workinh how will it look like)
+Conclusion (own words)
+Bibliography      (html , xml, ms sql , se books, author, date, company; don’t put google, yt.)    
+
+
+
+
+COMPLETE    BEFORE MARCH 20TH 2025
+TIMES NEW ROMAN
+CNT 12
+HEADING 14
+TITLE 16
+	Pg. No
+
+
+   
+
+✅ What to Include in "Project Description" (min 6 pages):
+1. Project Title and Summary
+Briefly introduce the project title and its one-liner purpose.
+
+2. Purpose of the Project
+Why is this project being created?
+
+What problem does it solve?
+
+Who are the users (admin, student, manager, etc.)?
+
+3. Scope of the Project
+What does the project cover?
+
+What modules will it have?
+
+What future expansions are possible?
+
+4. Objectives
+Mention clear goals like: automate attendance, generate reports, manage customers, etc.
+
+5. Modules Explanation
+Describe each module in a paragraph:
+
+Admin Module
+
+User Module
+
+Report Module
+
+Notification Module
+
+Authentication Module (as applicable)
+
+6. Features & Functionalities
+List and explain key features like login, data entry, validation, search, CRUD operations, reporting, etc.
+
+7. Target Users
+Who will use the system and in what environment (college, office, client, etc.)?
+
+8. Use Case Scenarios
+Example use case (e.g. “A student logs in, views attendance, downloads report”)
+
+9. Expected Outcomes
+What will users gain?
+
+Improved speed, efficiency, reduced manual errors?
+
+10. Advantages Over Existing System
+Better than manual system? Time-saving? Less paperwork?
+
+11. Limitations (if any)
+What you couldn’t implement? (E.g. “SMS gateway not included due to cost”)
+
+🔶 1. System Study
+2.1 Existing System
+Describe current process (manual/inefficient).
+
+Limitations: time-consuming, error-prone, lacks automation.
+
+2.2 Proposed System
+What you are planning to build.
+
+Brief about features, modules, improvements over old system.
+
+2.3 Data Flow Diagram (Level 2)
+One consolidated DFD showing all modules.
+
+Use proper notations: processes, data stores, data flows, external entities.
+
+2.4 ER Diagram
+Entity-Relationship diagram of your database.
+
+Show entities, attributes, and relationships.
+
+🔶 2. System Configuration
+3.1 Hardware Configuration
+Development machine specs (your laptop/PC)
+
+Minimum deployment configuration (RAM, processor, storage, etc.)
+
+3.2 Software Configuration
+Frontend tools (e.g., HTML, React)
+
+Backend tools (e.g., Java, PHP)
+
+Database (e.g., MySQL)
+
+Reporting tools (e.g., JasperReports)
+
+Mention versions, tool names, and purpose
+
+🔶 3. Details of Software
+4.1 Overview of Front End
+Languages/frameworks used (HTML, JS, etc.)
+
+User Interface design
+
+Screens/forms designed
+
+Tool used for UI (Visual Studio Code, etc.)
+
+4.2 Overview of Back End
+Server-side language used (Java, PHP, etc.)
+
+How it handles logic
+
+Database: table names, types, relationships
+
+Important queries used
+
+🔶 4. System Design
+5.1 Architectural Design
+Describe overall system architecture (e.g., MVC).
+
+Layers: UI, Business Logic, Database Layer.
+
+5.2 Input Design
+Input forms/screenshots without data.
+
+Layout of input fields, validations.
+
+5.3 Output Design
+Output formats (report formats, tables).
+
+Sample outputs (with data).
+
+5.4 Database Design
+Screenshots of database tables.
+
+Table structures: field names, data types, primary keys, foreign keys.
+
+🔶 5. Source Code
+Limited but important parts of the code (not entire project).
+
+Only major functions: login, insert, update, report generation.
+
+Include comments for clarity.
+
+🔶 6. Testing
+Types of testing you performed:
+
+Unit testing
+
+Integration testing
+
+System testing
+
+Mention tools used for testing (if any).
+
+Show sample test cases and their results.
+
+🔶 7. Implementation
+Steps followed to deploy the system.
+
+Where it was deployed (college lab, local server, online).
+
+Tools and methods used for deployment.
+
+Challenges faced during deployment.
+
+🔶 8. Screen Shots
+All completed forms/screens with actual data.
+
+Show login, dashboard, form submission, report generation, etc.
+
+Organized and labeled.
+
+🔶 9. Conclusion
+Summary of what you achieved.
+
+Challenges faced.
+
+Skills learned (e.g., teamwork, coding, problem-solving).
+
+Future improvements.
+
+🔶 10. Bibliography
+List of books, official documentation, and reliable resources.
+
+Format: Author, Book Title, Publisher, Year.
+
+Example:
+
+css
+Copy
+Edit
+Deitel & Deitel, Java How to Program, Pearson, 2014.
+Microsoft Docs, HTML Reference, Microsoft, 2023.

@@ -22,3 +22,19 @@ class Config:
     # ✅ Google OAuth Configuration
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    
+    # ✅ Maintenance Mode Configuration
+    MAINTENANCE_MODE = os.getenv("MAINTENANCE_MODE", "False").lower() == "true"
+    # Restore original configuration for production
+    MAINTENANCE_BYPASS_IPS = os.getenv("MAINTENANCE_BYPASS_IPS", "127.0.0.1").split(",")
+    # MAINTENANCE_BYPASS_IPS = []  # Empty list for testing - remove this line when done testing
+    MAINTENANCE_BYPASS_PATHS = [
+        '/static/',  # Allow static resources
+        '/favicon.ico',
+        '/admin/',  # Allow all admin routes
+        '/maintenance-preview',  # Allow maintenance preview
+        '/toggle-maintenance',  # Allow maintenance toggle endpoint
+        '/check-auth',  # Allow authentication check
+        '/test-maintenance'  # Allow maintenance test route
+    ]
+    MAINTENANCE_END_TIME = os.getenv("MAINTENANCE_END_TIME", "24 hours")  # Display text for maintenance end time

@@ -1,0 +1,37 @@
+[28-03-2025 13:36] 0d: * Report generated and modules in project description in point form
+* Image caption should be specific to ur project eg. Project name ER-Diagram
+* Add comments column in db design. It should contain description of the attribute
+* Input and output design topic description 
+* Add unit, functionality, integration testing
+[28-03-2025 13:36] 0d: 1. All the content should be in justified format. Add page break after each section. Line spacing should be same 
+2. Module description should be in project description and in synopsis there should not be modules described the synopsis should only include problem, solution and scope in paragraph format.
+3. In dfd level 1,2 should be there and if level 3 is there add that too.
+4. In bibliography if you are referring any book it should be in the format:  author name (year, titile, publisher). If not , then add the necessary reference of the website 
+5. Add testing screenshots.
+[28-03-2025 13:36] 0d: * Report generated and modules in project description in point form
+* Image caption should be specific to ur project eg. Project name ER-Diagram
+* Add comments column in db design. It should contain description of the attribute
+* Project report should be in bullet points
+* Citation should be given in the existing system page and that should be linked to the bibliography.
+* Add unit, functionality, integration testing
+[28-03-2025 13:36] 0d: 1)Number all the headings and subheadings.
+2)Details in the dfd and er diagram should be in size - 12.
+[28-03-2025 13:36] 0d: 1. Mention about end users in the end of synopsis 
+2. Mention modules in project description in bullet points
+3. Report generation in bullet points 
+4. Label all Diagrams like figure 2.1
+5. Add screenshot in input and output design
+6. Before giving source code write following is the source code
+7. Number bibliography instead of bullet points
+[28-03-2025 13:36] 0d: Project checks:
+1. In the project description mention the modules and reports generated in bullet points 
+2. Existing system - Citation required 
+3. Database Design - column name, data types , constraints and description
+[28-03-2025 13:36] 0d: Project checks 
+1: make sure quoations is removed in heading
+2:small Description for main heading 
+3:proper numbering
+[28-03-2025 13:36] 0d: Incorrect dfd diagrams,
+Labels of diagram,
+Er diagram, architectural diagram,
+Bibliography, unit, validation, integration testing

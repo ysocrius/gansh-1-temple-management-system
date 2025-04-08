@@ -1,0 +1,59 @@
+flowchart TD
+    %% External Entities
+    Devotee([Devotee])
+    Admin([Administrator])
+    PaymentGateway([Payment Gateway])
+    EmailService([Email Service])
+    
+    %% Main processes in a more grid-like arrangement
+    UserMgmt[1.0 User<br>Management]
+    DonationMgmt[2.0 Donation<br>Management]
+    SevaMgmt[3.0 Seva<br>Management]
+    EventMgmt[4.0 Event<br>Management]
+    TestimonialMgmt[5.0 Testimonial<br>Management]
+    AdminMgmt[6.0 Admin<br>Functions]
+    
+    %% Database stores positioned at bottom
+    subgraph Databases
+        UserDB[(User DB)]
+        DonationDB[(Donation DB)]
+        SevaDB[(Seva DB)]
+        EventDB[(Event DB)]
+        TestimonialDB[(Testimonial DB)]
+        PaymentDB[(Payment DB)]
+    end
+    
+    %% Position devotee to connect to primary functions
+    Devotee --> UserMgmt
+    Devotee --> DonationMgmt
+    Devotee --> SevaMgmt
+    Devotee --> EventMgmt
+    Devotee --> TestimonialMgmt
+    
+    %% Admin connections
+    Admin --> AdminMgmt
+    Admin --> EventMgmt
+    Admin --> TestimonialMgmt
+    
+    %% External services
+    PaymentGateway <--> DonationMgmt
+    PaymentGateway <--> SevaMgmt
+    EmailService <--> UserMgmt
+    EmailService <--> DonationMgmt
+    EmailService <--> SevaMgmt
+    
+    %% Database connections
+    UserMgmt <--> UserDB
+    DonationMgmt <--> DonationDB
+    SevaMgmt <--> SevaDB
+    EventMgmt <--> EventDB
+    TestimonialMgmt <--> TestimonialDB
+    DonationMgmt --> PaymentDB
+    SevaMgmt --> PaymentDB
+    
+    %% Admin management connections
+    AdminMgmt <--> UserDB
+    AdminMgmt <--> DonationDB
+    AdminMgmt <--> SevaDB
+    AdminMgmt <--> EventDB
+    AdminMgmt <--> TestimonialDB

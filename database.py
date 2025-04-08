@@ -19,6 +19,7 @@ order_details = db["order_details"]
 bill_collection = db["bill_collection"]
 donation_goals_collection = db["donation_goals"]
 testimonial_collection = db["testimonials"]
+admin_log = db["admin_log"]  # Collection for storing admin login OTPs and audit logs
 
 
 def get_database():
