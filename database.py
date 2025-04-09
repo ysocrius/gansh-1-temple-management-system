@@ -20,6 +20,7 @@ bill_collection = db["bill_collection"]
 donation_goals_collection = db["donation_goals"]
 testimonial_collection = db["testimonials"]
 admin_log = db["admin_log"]  # Collection for storing admin login OTPs and audit logs
+maintenance_log = db["maintenance_log"]  # Collection for tracking maintenance mode changes
 
 
 def get_database():

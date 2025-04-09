@@ -1,0 +1,283 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Maintenance Logs{% endblock %}
+
+{% block content %}
+<h1 style="color: #333;">Maintenance Logs</h1>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Maintenance Statistics -->
+<div class="stats-cards">
+    <div class="stats-card">
+        <div class="stats-icon blue">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stats-info">
+            <h3>Total Events</h3>
+            <p class="stats-value">{{ stats.total_logs }}</p>
+            <p class="stats-detail">{{ stats.total_enabled }} Enabled / {{ stats.total_disabled }} Disabled</p>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="stats-icon red">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="stats-info">
+            <h3>Total Downtime</h3>
+            <p class="stats-value">{{ stats.total_downtime_formatted or 'N/A' }}</p>
+            <p class="stats-detail">Avg: {{ stats.avg_downtime_formatted or 'N/A' }}</p>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="stats-icon green">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stats-info">
+            <h3>Total Uptime</h3>
+            <p class="stats-value">{{ stats.total_uptime_formatted or 'N/A' }}</p>
+            <p class="stats-detail">Avg: {{ stats.avg_uptime_formatted or 'N/A' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card table-card">
+    <div class="card-header">
+        <h2>Maintenance History</h2>
+        <a href="{{ url_for('admin.maintenance_settings') }}" class="btn btn-primary">
+            <i class="fas fa-cog"></i> Maintenance Settings
+        </a>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Timestamp</th>
+                    <th>Duration</th>
+                    <th>Admin</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if logs %}
+                    {% for log in logs %}
+                        <tr class="{{ 'enabled-row' if log.action == 'enabled' else 'disabled-row' }}">
+                            <td>
+                                <span class="status-badge {{ log.action }}">
+                                    <i class="fas {{ 'fa-tools' if log.action == 'enabled' else 'fa-check-circle' }}"></i>
+                                    {{ log.action|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if log.timestamp %}
+                                    {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.action == 'enabled' %}
+                                    <span title="How long the site was up before this maintenance">
+                                        {{ log.uptime_formatted or 'N/A' }}
+                                    </span>
+                                {% else %}
+                                    <span title="How long maintenance mode was active">
+                                        {{ log.downtime_formatted or 'N/A' }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.admin_email }}</td>
+                            <td>{{ log.ip_address }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">No maintenance logs found</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* Stats Cards */
+    .stats-cards {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .stats-card {
+        flex: 1;
+        min-width: 250px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        margin-right: 15px;
+    }
+    
+    .stats-icon.blue {
+        background-color: #007bff;
+    }
+    
+    .stats-icon.red {
+        background-color: #dc3545;
+    }
+    
+    .stats-icon.green {
+        background-color: #28a745;
+    }
+    
+    .stats-info h3 {
+        margin: 0;
+        font-size: 16px;
+        color: #555;
+    }
+    
+    .stats-value {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 5px 0;
+        color: #333;
+    }
+    
+    .stats-detail {
+        font-size: 14px;
+        color: #777;
+        margin: 0;
+    }
+    
+    /* Table Card */
+    .table-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .card-header {
+        padding: 15px 20px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0069d9;
+        color: white;
+    }
+    
+    /* Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th {
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: bold;
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        background-color: #f8f9fa;
+    }
+    
+    .table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .enabled-row {
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+    
+    .disabled-row {
+        background-color: rgba(40, 167, 69, 0.05);
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .status-badge.enabled {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+    
+    .status-badge.disabled {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+    
+    .status-badge i {
+        margin-right: 5px;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .stats-cards {
+            flex-direction: column;
+        }
+        
+        .stats-card {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %} 

@@ -35,6 +35,13 @@
     </div>
 </div>
 
+<!-- Maintenance Logs Link -->
+<div class="logs-link-container">
+    <a href="{{ url_for('admin.maintenance_logs') }}" class="logs-link">
+        <i class="fas fa-history"></i> View Maintenance History & Statistics
+    </a>
+</div>
+
 <!-- Pass the Unix timestamp to JavaScript -->
 <input type="hidden" id="last-updated-unix" value="{{ last_updated_unix }}">
 
@@ -430,6 +437,33 @@ if (maintenanceTimerElement) {
         font-weight: bold;
         font-family: monospace;
         font-size: 1.1em;
+    }
+
+    /* Maintenance Logs Link */
+    .logs-link-container {
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .logs-link {
+        display: inline-block;
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+        font-weight: 500;
+    }
+    
+    .logs-link:hover {
+        background-color: #0069d9;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .logs-link i {
+        margin-right: 8px;
     }
 </style>
 {% endblock %} 

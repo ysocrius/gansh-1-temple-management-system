@@ -23,6 +23,9 @@
     <a href="{{ url_for('admin.maintenance_settings') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin.maintenance_settings' else '' }}">
         <i class="fas fa-tools me-2"></i> Maintenance
     </a>
+    <a href="{{ url_for('admin.maintenance_logs') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin.maintenance_logs' else '' }}">
+        <i class="fas fa-history me-2"></i> Maintenance Logs
+    </a>
     <a href="{{ url_for('admin.settings') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin.settings' else '' }}">
         <i class="fas fa-cog me-2"></i> Settings
     </a>

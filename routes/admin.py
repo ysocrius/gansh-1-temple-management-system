@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, make_response, flash
-from database import user_collection, seva_collection, donations_collection, admin_log
+from database import user_collection, seva_collection, donations_collection, admin_log, maintenance_log
 from bson.objectid import ObjectId
 import datetime
 import json
@@ -22,6 +22,30 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 # Admin email configuration - Update this with your actual admin email
 ADMIN_EMAIL = "yeshwanthcr108@gmail.com"
+
+# Helper function to format duration in seconds to human-readable format
+def format_duration(seconds):
+    """Format duration in seconds to a human-readable string (days, hours, minutes, seconds)"""
+    if seconds is None:
+        return None
+        
+    days = seconds // (24 * 3600)
+    seconds %= (24 * 3600)
+    hours = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    
+    parts = []
+    if days > 0:
+        parts.append(f"{int(days)}d")
+    if hours > 0 or days > 0:
+        parts.append(f"{int(hours)}h")
+    if minutes > 0 or hours > 0 or days > 0:
+        parts.append(f"{int(minutes)}m")
+    parts.append(f"{int(seconds)}s")
+    
+    return " ".join(parts)
 
 # Authentication middleware for admin routes
 @admin_bp.before_request
@@ -383,6 +407,7 @@ def maintenance_settings():
     import os
     import random
     import time
+    from database import maintenance_log
     
     # Path to store maintenance status
     try:
@@ -396,20 +421,25 @@ def maintenance_settings():
     unix_timestamp = int(time.time())
     current_time = datetime.datetime.now()
     
-    # For debugging
-    logger.info(f"TIMESTAMP DEBUG - Current time: {current_time}, Unix timestamp: {unix_timestamp}")
-    
     if request.method == "POST":
         action = request.form.get("action")
         
-        # Force cleanup of any old records
-        try:
-            delete_result = admin_log.delete_many({"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}})
-            logger.info(f"Deleted {delete_result.deleted_count} old maintenance records")
-        except Exception as e:
-            logger.error(f"Error deleting old maintenance records: {str(e)}")
-        
         if action == "enable":
+            # Check if there's a previous disabled log to calculate uptime
+            try:
+                last_disabled = maintenance_log.find_one(
+                    {"action": "disabled"},
+                    sort=[("timestamp_unix", -1)]
+                )
+                
+                uptime_duration = None
+                if last_disabled and "timestamp_unix" in last_disabled:
+                    # Calculate how long the site was up (in seconds)
+                    uptime_duration = unix_timestamp - last_disabled["timestamp_unix"]
+            except Exception as e:
+                logger.error(f"Error calculating uptime duration: {str(e)}")
+                uptime_duration = None
+            
             # Enable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = True
             # Set end time if provided
@@ -433,9 +463,41 @@ def maintenance_settings():
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
             
+            # Log to maintenance_log collection
+            try:
+                maintenance_log.insert_one({
+                    "action": "enabled",
+                    "timestamp_unix": unix_timestamp,
+                    "timestamp": datetime.datetime.fromtimestamp(unix_timestamp),
+                    "admin_email": ADMIN_EMAIL,
+                    "ip_address": request.remote_addr,
+                    "user_agent": request.user_agent.string,
+                    "end_time": end_time,
+                    "uptime_duration": uptime_duration,  # How long the site was up before maintenance
+                    "uptime_formatted": format_duration(uptime_duration) if uptime_duration else None
+                })
+                logger.info(f"Maintenance mode enabled logged to maintenance_log at {unix_timestamp}")
+            except Exception as e:
+                logger.error(f"Error logging to maintenance_log: {str(e)}")
+            
             flash("Maintenance mode enabled", "success")
         
         elif action == "disable":
+            # Check if there's a previous enabled log to calculate downtime
+            try:
+                last_enabled = maintenance_log.find_one(
+                    {"action": "enabled"},
+                    sort=[("timestamp_unix", -1)]
+                )
+                
+                downtime_duration = None
+                if last_enabled and "timestamp_unix" in last_enabled:
+                    # Calculate how long the site was down (in seconds)
+                    downtime_duration = unix_timestamp - last_enabled["timestamp_unix"]
+            except Exception as e:
+                logger.error(f"Error calculating downtime duration: {str(e)}")
+                downtime_duration = None
+            
             # Disable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = False
             
@@ -454,6 +516,22 @@ def maintenance_settings():
                 logger.info(f"Maintenance mode disabled and saved to {maintenance_file} at {unix_timestamp}")
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
+            
+            # Log to maintenance_log collection
+            try:
+                maintenance_log.insert_one({
+                    "action": "disabled",
+                    "timestamp_unix": unix_timestamp,
+                    "timestamp": datetime.datetime.fromtimestamp(unix_timestamp),
+                    "admin_email": ADMIN_EMAIL,
+                    "ip_address": request.remote_addr,
+                    "user_agent": request.user_agent.string,
+                    "downtime_duration": downtime_duration,  # How long the site was down
+                    "downtime_formatted": format_duration(downtime_duration) if downtime_duration else None
+                })
+                logger.info(f"Maintenance mode disabled logged to maintenance_log at {unix_timestamp}")
+            except Exception as e:
+                logger.error(f"Error logging to maintenance_log: {str(e)}")
             
             flash("Maintenance mode disabled", "success")
     
@@ -596,3 +674,49 @@ def maintenance_emergency_reset():
     return render_template(
         "admin/maintenance_reset.html"
     )
+
+@admin_bp.route("/maintenance-logs")
+def maintenance_logs():
+    """View maintenance mode logs"""
+    from database import maintenance_log
+    
+    try:
+        # Get all maintenance logs
+        logs = list(maintenance_log.find(
+            {},
+            sort=[("timestamp_unix", -1)]  # Sort by timestamp descending (newest first)
+        ))
+        
+        # Calculate maintenance statistics
+        stats = {
+            "total_logs": len(logs),
+            "total_enabled": sum(1 for log in logs if log.get("action") == "enabled"),
+            "total_disabled": sum(1 for log in logs if log.get("action") == "disabled"),
+            "total_downtime": sum(log.get("downtime_duration", 0) or 0 for log in logs if log.get("action") == "disabled"),
+            "total_uptime": sum(log.get("uptime_duration", 0) or 0 for log in logs if log.get("action") == "enabled"),
+            "avg_downtime": 0,
+            "avg_uptime": 0
+        }
+        
+        # Calculate averages
+        if stats["total_disabled"] > 0:
+            stats["avg_downtime"] = stats["total_downtime"] / stats["total_disabled"]
+        
+        if stats["total_enabled"] > 0:
+            stats["avg_uptime"] = stats["total_uptime"] / stats["total_enabled"]
+        
+        # Format durations for display
+        stats["total_downtime_formatted"] = format_duration(stats["total_downtime"])
+        stats["total_uptime_formatted"] = format_duration(stats["total_uptime"])
+        stats["avg_downtime_formatted"] = format_duration(stats["avg_downtime"])
+        stats["avg_uptime_formatted"] = format_duration(stats["avg_uptime"])
+        
+        return render_template(
+            "admin/maintenance_logs.html",
+            logs=logs,
+            stats=stats
+        )
+    except Exception as e:
+        logger.error(f"Error retrieving maintenance logs: {str(e)}")
+        flash(f"Error retrieving maintenance logs: {str(e)}", "danger")
+        return redirect(url_for("admin.maintenance_settings"))
