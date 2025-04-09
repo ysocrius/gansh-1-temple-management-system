@@ -83,14 +83,14 @@
     /* Container for the two-column layout */
     .seva-container {
         display: flex;
-        gap: 30px;
-        height: calc(100vh - 200px); /* Adjust based on header height */
-        margin-top: 20px;
+        gap: 20px; /* Reduced gap */
+        height: calc(100vh - 180px); /* Slightly reduced height */
+        margin-top: 15px; /* Reduced margin */
     }
     
     /* Left column - Fixed form */
     .seva-form-column {
-        flex: 0 0 400px; /* Increased fixed width */
+        flex: 0 0 350px; /* Reduced fixed width from 400px to 350px */
         position: sticky;
         top: 20px;
         height: fit-content;
@@ -109,7 +109,7 @@
     /* Form styling */
     .seva-form {
         background: #f8f9fa;
-        padding: 20px; /* Increased padding */
+        padding: 15px; /* Reduced padding */
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         width: 90%; /* Set form width to 90% of container */
@@ -117,45 +117,45 @@
     
     .seva-form h2 {
         color: #333;
-        margin-bottom: 15px; /* Increased margin */
+        margin-bottom: 10px; /* Reduced margin */
         text-align: center;
-        font-size: 20px; /* Larger font size */
+        font-size: 18px; /* Slightly smaller font size */
     }
     
     .seva-form label {
         display: block;
-        margin-bottom: 5px; /* Increased margin */
+        margin-bottom: 3px; /* Reduced margin */
         font-weight: bold;
-        font-size: 14px; /* Larger font size */
+        font-size: 13px; /* Smaller font size */
     }
     
     .seva-form input,
     .seva-form textarea,
     .styled-dropdown {
         width: 100%;
-        padding: 8px; /* Increased padding */
-        margin-bottom: 12px; /* Increased margin */
+        padding: 6px; /* Reduced padding */
+        margin-bottom: 8px; /* Reduced margin */
         border: 1px solid #ddd;
         border-radius: 5px;
-        font-size: 14px; /* Fixed font size */
+        font-size: 13px; /* Smaller font size */
     }
     
     .seva-form textarea {
-        height: 80px; /* Taller textarea */
+        height: 60px; /* Shorter textarea */
         resize: vertical;
     }
     
     .seva-form button {
         width: 100%;
-        padding: 10px; /* Increased padding */
+        padding: 8px; /* Reduced padding */
         background-color: #007bff;
         color: white;
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        font-size: 16px; /* Larger font size */
+        font-size: 15px; /* Slightly smaller font size */
         transition: background-color 0.3s;
-        margin-top: 10px; /* Increased margin */
+        margin-top: 8px; /* Reduced margin */
     }
     
     .seva-form button:hover {
@@ -224,14 +224,14 @@
     /* Styled Dropdown */
     .styled-dropdown {
         width: 100%;
-        padding: 10px;
-        font-size: 16px;
+        padding: 6px; /* Reduced padding */
+        font-size: 13px; /* Smaller font size */
         border: 1px solid #ddd;
         border-radius: 5px;
         background-color: #fff;
         color: #333;
         cursor: pointer;
-        margin-bottom: 15px;
+        margin-bottom: 8px; /* Reduced margin */
         transition: border 0.3s, box-shadow 0.3s;
     }
 
