@@ -16,7 +16,8 @@
 
 <!-- Timestamp indicator -->
 <div style="text-align: right; font-size: 12px; color: #666; margin-bottom: 10px;">
-    Page loaded: <span id="page-load-time"></span>
+    <div>Page loaded: <span id="page-load-time"></span></div>
+    <div>Auto-refresh in: <span id="refresh-countdown">5</span> seconds</div>
 </div>
 
 <!-- Maintenance Status Banner -->
@@ -29,8 +30,8 @@
         <p>Last updated: {{ last_updated_str }} (IST)</p>
     </div>
     <div class="status-action">
-        <a href="{{ url_for('admin.maintenance_settings') }}" class="refresh-btn">
-            <i class="fas fa-sync-alt"></i> Refresh
+        <a href="{{ url_for('admin.maintenance_settings') }}?nocache={{ range(1, 1000000) | random }}" class="refresh-btn">
+            <i class="fas fa-sync-alt"></i> Refresh Now
         </a>
     </div>
 </div>
@@ -95,13 +96,34 @@
 </div>
 
 <script>
-// Display the current time the page was loaded
-document.getElementById('page-load-time').textContent = new Date().toLocaleTimeString();
+// Current time formatting
+function formatTime(date) {
+    return date.toLocaleTimeString() + "." + 
+           date.getMilliseconds().toString().padStart(3, '0');
+}
 
-// Auto-reload the page every 10 seconds to ensure fresh data
-setTimeout(function() {
-    window.location.reload();
-}, 10000);
+// Display the current time the page was loaded
+const loadTime = new Date();
+document.getElementById('page-load-time').textContent = formatTime(loadTime);
+
+// Display countdown and auto-refresh
+const countdownElement = document.getElementById('refresh-countdown');
+let countdown = 5; // 5 seconds
+
+function updateCountdown() {
+    countdown--;
+    if (countdown <= 0) {
+        // Add a random parameter to bypass cache
+        const timestamp = new Date().getTime();
+        window.location.href = window.location.pathname + '?nocache=' + timestamp;
+    } else {
+        countdownElement.textContent = countdown;
+        setTimeout(updateCountdown, 1000);
+    }
+}
+
+// Start countdown
+setTimeout(updateCountdown, 1000);
 </script>
 
 <style>

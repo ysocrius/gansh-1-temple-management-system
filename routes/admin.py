@@ -381,6 +381,8 @@ def maintenance_settings():
     from flask import current_app
     import json
     import os
+    import random
+    import time
     
     # Path to store maintenance status
     try:
@@ -390,21 +392,28 @@ def maintenance_settings():
         maintenance_file = 'maintenance_status.json'
         logger.error(f"Error with maintenance file path, using fallback: {str(e)}")
     
+    # Generate a unique timestamp to ensure it's always different
+    current_time = datetime.datetime.now()
+    ist_time = current_time + datetime.timedelta(hours=5, minutes=30)
+    
+    # Format with a random millisecond component to ensure uniqueness
+    random_ms = random.randint(0, 999)
+    timestamp_str = ist_time.strftime(f'%Y-%m-%d %H:%M:%S.{random_ms:03d}')
+    
+    # Log debug info
+    logger.info(f"TIMESTAMP DEBUG - Current time: {current_time}, IST time: {ist_time}, Formatted: {timestamp_str}")
+    
     if request.method == "POST":
         action = request.form.get("action")
         
-        # Get current time in IST
-        current_time_ist = datetime.datetime.now() + datetime.timedelta(hours=5, minutes=30)
-        timestamp_str = current_time_ist.strftime('%Y-%m-%d %H:%M:%S')
+        # Force cleanup of any old records
+        try:
+            delete_result = admin_log.delete_many({"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}})
+            logger.info(f"Deleted {delete_result.deleted_count} old maintenance records")
+        except Exception as e:
+            logger.error(f"Error deleting old maintenance records: {str(e)}")
         
         if action == "enable":
-            # Delete all previous maintenance records to ensure timestamp freshness
-            try:
-                delete_result = admin_log.delete_many({"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}})
-                logger.info(f"Deleted {delete_result.deleted_count} old maintenance records")
-            except Exception as e:
-                logger.error(f"Error deleting old maintenance records: {str(e)}")
-                
             # Enable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = True
             # Set end time if provided
@@ -412,75 +421,43 @@ def maintenance_settings():
             if end_time:
                 current_app.config["MAINTENANCE_END_TIME"] = end_time
             
-            # Save to file for persistence - including the timestamp
+            # Generate a new unique timestamp for this action
+            action_timestamp = f"{timestamp_str} ({time.time():.0f})"
+            
+            # Save to file for persistence
             try:
                 with open(maintenance_file, 'w') as f:
                     json.dump({
                         "maintenance_mode": True,
                         "end_time": end_time,
-                        "last_updated": timestamp_str,
+                        "last_updated": action_timestamp,
                         "action": "enabled"
                     }, f)
-                logger.info(f"Maintenance mode enabled and saved to {maintenance_file} at {timestamp_str}")
+                logger.info(f"Maintenance mode enabled and saved to {maintenance_file} at {action_timestamp}")
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
-            
-            # Log the action with IST timezone (UTC+5:30)
-            try:
-                # Generate a unique action ID
-                action_id = f"maintenance_{int(time.time())}"
-                admin_log.insert_one({
-                    "email": ADMIN_EMAIL,
-                    "action": "maintenance_enabled",
-                    "action_id": action_id,
-                    "timestamp": current_time_ist,
-                    "ip_address": request.remote_addr,
-                    "user_agent": request.user_agent.string,
-                    "end_time": end_time
-                })
-            except Exception as e:
-                logger.error(f"Error logging maintenance action: {str(e)}")
             
             flash("Maintenance mode enabled", "success")
         
         elif action == "disable":
-            # Delete all previous maintenance records to ensure timestamp freshness
-            try:
-                delete_result = admin_log.delete_many({"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}})
-                logger.info(f"Deleted {delete_result.deleted_count} old maintenance records")
-            except Exception as e:
-                logger.error(f"Error deleting old maintenance records: {str(e)}")
-                
             # Disable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = False
             
-            # Save to file for persistence - including the timestamp
+            # Generate a new unique timestamp for this action
+            action_timestamp = f"{timestamp_str} ({time.time():.0f})"
+            
+            # Save to file for persistence
             try:
                 with open(maintenance_file, 'w') as f:
                     json.dump({
                         "maintenance_mode": False,
                         "end_time": "",
-                        "last_updated": timestamp_str,
+                        "last_updated": action_timestamp,
                         "action": "disabled"
                     }, f)
-                logger.info(f"Maintenance mode disabled and saved to {maintenance_file} at {timestamp_str}")
+                logger.info(f"Maintenance mode disabled and saved to {maintenance_file} at {action_timestamp}")
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
-            
-            # Log the action with IST timezone (UTC+5:30)
-            try:
-                # Generate a unique action ID
-                action_id = f"maintenance_{int(time.time())}"
-                admin_log.insert_one({
-                    "email": ADMIN_EMAIL,
-                    "action": "maintenance_disabled",
-                    "action_id": action_id,
-                    "timestamp": current_time_ist,
-                    "ip_address": request.remote_addr,
-                    "user_agent": request.user_agent.string
-                })
-            except Exception as e:
-                logger.error(f"Error logging maintenance action: {str(e)}")
             
             flash("Maintenance mode disabled", "success")
     
@@ -490,7 +467,9 @@ def maintenance_settings():
     bypass_ips = current_app.config.get("MAINTENANCE_BYPASS_IPS", ["127.0.0.1"])
     
     # Read directly from the file for the last updated timestamp
-    last_updated_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Default fallback
+    # If no timestamp is found, use the current generated one
+    last_updated_str = timestamp_str
+    
     try:
         if os.path.exists(maintenance_file):
             with open(maintenance_file, 'r') as f:
@@ -498,6 +477,10 @@ def maintenance_settings():
                 if "last_updated" in maintenance_data:
                     last_updated_str = maintenance_data["last_updated"]
                     logger.info(f"Found last_updated in file: {last_updated_str}")
+                else:
+                    logger.warning("No last_updated field in maintenance data, using current timestamp")
+        else:
+            logger.warning(f"Maintenance file not found at {maintenance_file}, using current timestamp")
     except Exception as e:
         logger.error(f"Error reading maintenance file: {str(e)}")
     
@@ -510,10 +493,12 @@ def maintenance_settings():
         last_updated_str=last_updated_str
     ))
     
-    # Add cache control headers to prevent caching
+    # Add aggressive cache control headers
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    response.headers["Expires"] = "-1"
+    response.headers["Vary"] = "*"
+    response.headers["ETag"] = f"\"{random.randint(0, 999999)}\""
     
     return response
 
@@ -545,3 +530,77 @@ def maintenance_debug():
     except Exception as e:
         logger.error(f"Error in maintenance debug: {str(e)}")
         return f"Error retrieving maintenance actions: {str(e)}"
+
+@admin_bp.route("/maintenance-reset", methods=["GET", "POST"])
+def maintenance_emergency_reset():
+    """Emergency endpoint for resetting maintenance status in case of issues"""
+    from flask import current_app
+    import json
+    import os
+    import time
+    import random
+    
+    if request.method == "POST":
+        reset_action = request.form.get("reset_action", "disable")
+        
+        # Get current time with IST adjustment
+        current_time = datetime.datetime.now()
+        ist_time = current_time + datetime.timedelta(hours=5, minutes=30)
+        timestamp_str = ist_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Path to maintenance status file
+        try:
+            maintenance_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'maintenance_status.json')
+        except Exception as e:
+            maintenance_file = 'maintenance_status.json'
+            
+        # Create a completely new maintenance status file
+        try:
+            # First try to delete all database records
+            try:
+                admin_log.delete_many({"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}})
+            except Exception as e:
+                logger.error(f"Failed to reset database records: {str(e)}")
+                
+            # Update config and write to file
+            maintenance_mode = (reset_action == "enable")
+            current_app.config["MAINTENANCE_MODE"] = maintenance_mode
+            
+            # Generate a unique timestamp string
+            unique_timestamp = f"{timestamp_str} (Reset {int(time.time())})"
+            
+            # Create maintenance file with fresh data
+            with open(maintenance_file, 'w') as f:
+                json.dump({
+                    "maintenance_mode": maintenance_mode,
+                    "end_time": "24 hours" if maintenance_mode else "",
+                    "last_updated": unique_timestamp,
+                    "action": "emergency_reset",
+                    "reset_time": int(time.time())
+                }, f)
+                
+            flash(f"Maintenance mode emergency reset to: {'ENABLED' if maintenance_mode else 'DISABLED'}", "success")
+            logger.info(f"Emergency reset performed: maintenance mode set to {maintenance_mode}")
+            
+            # Log the action in database as well
+            try:
+                admin_log.insert_one({
+                    "email": ADMIN_EMAIL,
+                    "action": f"maintenance_emergency_{reset_action}",
+                    "timestamp": ist_time,
+                    "emergency_reset": True,
+                    "ip_address": request.remote_addr,
+                    "user_agent": request.user_agent.string
+                })
+            except Exception as e:
+                logger.error(f"Failed to log emergency reset action: {str(e)}")
+                
+        except Exception as e:
+            flash(f"Emergency reset failed: {str(e)}", "danger")
+            logger.error(f"Emergency reset failed: {str(e)}")
+        
+        return redirect(url_for("admin.maintenance_settings"))
+            
+    return render_template(
+        "admin/maintenance_reset.html"
+    )
