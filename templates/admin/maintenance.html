@@ -99,55 +99,92 @@
 </div>
 
 <script>
-// Format the Unix timestamp to local time
-function formatUnixTimestamp(unixTimestamp) {
-    const date = new Date(unixTimestamp * 1000); // Convert to milliseconds
-    return date.toLocaleString('en-US', { 
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        hour12: true
-    });
-}
+// Get the Unix timestamp
+const unixTimestamp = parseInt(document.getElementById('last-updated-unix').value);
 
-// Current time formatting with milliseconds
-function formatTime(date) {
-    return date.toLocaleTimeString() + "." + 
-           date.getMilliseconds().toString().padStart(3, '0');
-}
+// Create separate debugging element to show what's happening
+const debugInfo = document.createElement('div');
+debugInfo.style.display = 'none'; // Hide by default
+debugInfo.style.fontSize = '12px';
+debugInfo.style.color = '#666';
+debugInfo.style.background = '#f8f9fa';
+debugInfo.style.padding = '10px';
+debugInfo.style.marginTop = '10px';
+debugInfo.style.borderRadius = '5px';
 
-// Convert the Unix timestamp to local time
-const unixTimestamp = document.getElementById('last-updated-unix').value;
-document.getElementById('last-updated-time').textContent = formatUnixTimestamp(unixTimestamp);
+// Add a toggle button for debugging info
+const debugToggle = document.createElement('button');
+debugToggle.textContent = 'Show Debug Info';
+debugToggle.style.fontSize = '10px';
+debugToggle.style.padding = '2px 5px';
+debugToggle.style.marginLeft = '10px';
+debugToggle.style.background = '#f8f9fa';
+debugToggle.style.border = '1px solid #ddd';
+debugToggle.style.borderRadius = '3px';
+debugToggle.style.cursor = 'pointer';
 
-// Show timezone
+// Toggle debug info visibility
+debugToggle.addEventListener('click', function() {
+  if (debugInfo.style.display === 'none') {
+    debugInfo.style.display = 'block';
+    debugToggle.textContent = 'Hide Debug Info';
+  } else {
+    debugInfo.style.display = 'none';
+    debugToggle.textContent = 'Show Debug Info';
+  }
+});
+
+// Insert debug toggle button
+document.querySelector('.status-text p').appendChild(debugToggle);
+
+// Format the timestamp in local timezone
+const localDate = new Date(unixTimestamp * 1000);
+const formattedLocalTime = localDate.toLocaleString();
+
+// Set the timestamp in the UI (using only local time)
+document.getElementById('last-updated-time').textContent = formattedLocalTime;
+
+// Display the user's timezone
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-document.getElementById('timezone-display').textContent = '(' + timezone + ')';
+document.getElementById('timezone-display').textContent = `(${timezone})`;
 
-// Display the current time the page was loaded
-const loadTime = new Date();
-document.getElementById('page-load-time').textContent = formatTime(loadTime);
+// Add debug info
+debugInfo.innerHTML = `
+  <h4 style="margin-top: 0; margin-bottom: 5px;">Timestamp Debug Info</h4>
+  <p><strong>Raw Unix timestamp:</strong> ${unixTimestamp}</p>
+  <p><strong>Local Date object:</strong> ${localDate}</p>
+  <p><strong>Formatted local time:</strong> ${formattedLocalTime}</p>
+  <p><strong>Browser timezone:</strong> ${timezone}</p>
+  <p><strong>UTC offset:</strong> ${-new Date().getTimezoneOffset() / 60} hours</p>
+`;
 
-// Display countdown and auto-refresh
+// Insert debug info after status text
+document.querySelector('.status-text').appendChild(debugInfo);
+
+// Format current time with milliseconds for page load time
+function formatCurrentTime(date) {
+  return date.toLocaleTimeString() + "." + 
+         date.getMilliseconds().toString().padStart(3, '0');
+}
+
+// Display the current load time
+document.getElementById('page-load-time').textContent = formatCurrentTime(new Date());
+
+// Set up auto-refresh countdown
 const countdownElement = document.getElementById('refresh-countdown');
-let countdown = 5; // 5 seconds
+let countdown = 5;
 
 function updateCountdown() {
-    countdown--;
-    if (countdown <= 0) {
-        // Add a random parameter to bypass cache
-        const timestamp = new Date().getTime();
-        window.location.href = window.location.pathname + '?nocache=' + timestamp;
-    } else {
-        countdownElement.textContent = countdown;
-        setTimeout(updateCountdown, 1000);
-    }
+  countdown--;
+  if (countdown <= 0) {
+    const timestamp = new Date().getTime();
+    window.location.href = window.location.pathname + '?nocache=' + timestamp;
+  } else {
+    countdownElement.textContent = countdown;
+    setTimeout(updateCountdown, 1000);
+  }
 }
 
-// Start countdown
 setTimeout(updateCountdown, 1000);
 </script>
 
