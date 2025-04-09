@@ -394,6 +394,13 @@ def maintenance_settings():
         action = request.form.get("action")
         
         if action == "enable":
+            # Delete all previous maintenance records to ensure timestamp freshness
+            try:
+                delete_result = admin_log.delete_many({"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}})
+                logger.info(f"Deleted {delete_result.deleted_count} old maintenance records")
+            except Exception as e:
+                logger.error(f"Error deleting old maintenance records: {str(e)}")
+                
             # Enable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = True
             # Set end time if provided
@@ -416,20 +423,31 @@ def maintenance_settings():
             try:
                 # Add 5.5 hours to timestamp for IST
                 current_time = datetime.datetime.now() + datetime.timedelta(hours=5, minutes=30)
+                # Generate a unique action ID to ensure we can find this specific action
+                action_id = f"maintenance_{int(time.time())}"
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
                     "action": "maintenance_enabled",
+                    "action_id": action_id,
                     "timestamp": current_time,
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string,
                     "end_time": end_time
                 })
+                logger.info(f"Logged maintenance enable action with ID: {action_id} at time: {current_time}")
             except Exception as e:
                 logger.error(f"Error logging maintenance action: {str(e)}")
             
             flash("Maintenance mode enabled", "success")
         
         elif action == "disable":
+            # Delete all previous maintenance records to ensure timestamp freshness
+            try:
+                delete_result = admin_log.delete_many({"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}})
+                logger.info(f"Deleted {delete_result.deleted_count} old maintenance records")
+            except Exception as e:
+                logger.error(f"Error deleting old maintenance records: {str(e)}")
+                
             # Disable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = False
             
@@ -448,13 +466,17 @@ def maintenance_settings():
             try:
                 # Add 5.5 hours to timestamp for IST
                 current_time = datetime.datetime.now() + datetime.timedelta(hours=5, minutes=30)
+                # Generate a unique action ID to ensure we can find this specific action
+                action_id = f"maintenance_{int(time.time())}"
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
                     "action": "maintenance_disabled",
+                    "action_id": action_id,
                     "timestamp": current_time,
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string
                 })
+                logger.info(f"Logged maintenance disable action with ID: {action_id} at time: {current_time}")
             except Exception as e:
                 logger.error(f"Error logging maintenance action: {str(e)}")
             
@@ -465,23 +487,64 @@ def maintenance_settings():
     maintenance_end_time = current_app.config.get("MAINTENANCE_END_TIME", "24 hours")
     bypass_ips = current_app.config.get("MAINTENANCE_BYPASS_IPS", ["127.0.0.1"])
     
-    # Get the last maintenance action for the timestamp
-    last_updated = datetime.datetime.now()
+    # Get the last maintenance action for the timestamp - using current time as fallback
+    last_updated = datetime.datetime.now() + datetime.timedelta(hours=5, minutes=30)
     try:
+        # Use more specific query and force a refresh by setting a high limit
         last_action = admin_log.find_one(
             {"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}},
-            sort=[("timestamp", -1)]
+            sort=[("timestamp", -1)],
+            limit=1
         )
         if last_action and "timestamp" in last_action:
             last_updated = last_action["timestamp"]
-            # We don't need to add 5.5 hours here anymore since we're storing with IST already
+            logger.info(f"Found last maintenance action: {last_action.get('action')} at {last_updated}")
+        else:
+            logger.warning("No maintenance action found in database, using current time")
     except Exception as e:
         logger.error(f"Error retrieving last maintenance action: {str(e)}")
     
-    return render_template(
+    # Force the page to not be cached
+    response = make_response(render_template(
         "admin/maintenance.html",
         maintenance_mode=maintenance_mode,
         maintenance_end_time=maintenance_end_time,
         bypass_ips=bypass_ips,
         last_updated=last_updated
-    )
+    ))
+    
+    # Add cache control headers to prevent caching
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
+    return response
+
+@admin_bp.route("/maintenance-debug")
+def maintenance_debug():
+    """Debug route to view all maintenance-related database entries"""
+    try:
+        # Get all maintenance actions from the database
+        maintenance_actions = list(admin_log.find(
+            {"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}},
+            sort=[("timestamp", -1)]
+        ))
+        
+        # Get current time for comparison
+        current_time = datetime.datetime.now()
+        ist_current_time = current_time + datetime.timedelta(hours=5, minutes=30)
+        
+        # Add a debugging message
+        logger.info(f"Found {len(maintenance_actions)} maintenance actions")
+        for idx, action in enumerate(maintenance_actions):
+            logger.info(f"Action {idx+1}: {action.get('action')} at {action.get('timestamp')}")
+        
+        return render_template(
+            "admin/maintenance_debug.html",
+            maintenance_actions=maintenance_actions,
+            current_time=current_time,
+            ist_current_time=ist_current_time
+        )
+    except Exception as e:
+        logger.error(f"Error in maintenance debug: {str(e)}")
+        return f"Error retrieving maintenance actions: {str(e)}"
