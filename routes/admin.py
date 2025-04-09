@@ -416,27 +416,14 @@ def maintenance_settings():
             # Log the action with IST timezone (UTC+5:30)
             try:
                 # Create timestamp with explicit timezone (India Standard Time)
-                # First try to get TZ offset from environment or use fallback value
-                try:
-                    tz_offset = float(os.environ.get("MAINTENANCE_TZ_OFFSET", 5.5))
-                    hours = int(tz_offset)
-                    minutes = int((tz_offset - hours) * 60)
-                except (ValueError, TypeError):
-                    # Fallback to IST if we can't parse the offset
-                    hours, minutes = 5, 30
-                
-                current_time = datetime.datetime.now(timezone(timedelta(hours=hours, minutes=minutes)))
-                
-                # Ensure the timestamp format is ISO to preserve timezone info
+                current_time = datetime.datetime.now(timezone(timedelta(hours=5, minutes=30)))
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
                     "action": "maintenance_enabled",
                     "timestamp": current_time,
-                    "timestamp_iso": current_time.isoformat(),  # Store ISO format as string as well
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string,
-                    "end_time": end_time,
-                    "timezone_offset": f"{hours}:{minutes:02d}"  # Store the offset explicitly
+                    "end_time": end_time
                 })
             except Exception as e:
                 logger.error(f"Error logging maintenance action: {str(e)}")
@@ -461,26 +448,13 @@ def maintenance_settings():
             # Log the action with IST timezone (UTC+5:30)
             try:
                 # Create timestamp with explicit timezone (India Standard Time)
-                # First try to get TZ offset from environment or use fallback value
-                try:
-                    tz_offset = float(os.environ.get("MAINTENANCE_TZ_OFFSET", 5.5))
-                    hours = int(tz_offset)
-                    minutes = int((tz_offset - hours) * 60)
-                except (ValueError, TypeError):
-                    # Fallback to IST if we can't parse the offset
-                    hours, minutes = 5, 30
-                
-                current_time = datetime.datetime.now(timezone(timedelta(hours=hours, minutes=minutes)))
-                
-                # Ensure the timestamp format is ISO to preserve timezone info
+                current_time = datetime.datetime.now(timezone(timedelta(hours=5, minutes=30)))
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
                     "action": "maintenance_disabled",
                     "timestamp": current_time,
-                    "timestamp_iso": current_time.isoformat(),  # Store ISO format as string as well
                     "ip_address": request.remote_addr,
-                    "user_agent": request.user_agent.string,
-                    "timezone_offset": f"{hours}:{minutes:02d}"  # Store the offset explicitly
+                    "user_agent": request.user_agent.string
                 })
             except Exception as e:
                 logger.error(f"Error logging maintenance action: {str(e)}")
@@ -493,55 +467,14 @@ def maintenance_settings():
     bypass_ips = current_app.config.get("MAINTENANCE_BYPASS_IPS", ["127.0.0.1"])
     
     # Get the last maintenance action for the timestamp - use IST timezone for default value
-    # First try to get TZ offset from environment or use fallback value
-    try:
-        tz_offset = float(os.environ.get("MAINTENANCE_TZ_OFFSET", 5.5))
-        hours = int(tz_offset)
-        minutes = int((tz_offset - hours) * 60)
-    except (ValueError, TypeError):
-        # Fallback to IST if we can't parse the offset
-        hours, minutes = 5, 30
-        
-    ist_tz = timezone(timedelta(hours=hours, minutes=minutes))
-    last_updated = datetime.datetime.now(ist_tz)
-    
+    last_updated = datetime.datetime.now(timezone(timedelta(hours=5, minutes=30)))
     try:
         last_action = admin_log.find_one(
             {"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}},
             sort=[("timestamp", -1)]
         )
-        
-        if last_action:
-            # Try multiple approaches to get a proper timezone-aware timestamp
-            
-            # 1. First try to use the ISO string if available (most reliable)
-            if "timestamp_iso" in last_action:
-                try:
-                    # Parse ISO format which preserves timezone info
-                    last_updated = datetime.datetime.fromisoformat(last_action["timestamp_iso"])
-                    logger.info(f"Using ISO timestamp: {last_updated}")
-                    # If no timezone info, add it
-                    if last_updated.tzinfo is None:
-                        last_updated = last_updated.replace(tzinfo=ist_tz)
-                        logger.info(f"Added timezone to ISO timestamp: {last_updated}")
-                except Exception as e:
-                    logger.error(f"Error parsing ISO timestamp: {str(e)}")
-            
-            # 2. If that fails, try the timestamp field
-            elif "timestamp" in last_action:
-                timestamp = last_action["timestamp"]
-                try:
-                    # If timestamp doesn't have timezone info, add it explicitly
-                    if timestamp.tzinfo is None:
-                        timestamp = timestamp.replace(tzinfo=ist_tz)
-                        logger.info(f"Added timezone to timestamp: {timestamp}")
-                    last_updated = timestamp
-                except Exception as e:
-                    logger.error(f"Error processing timestamp: {str(e)}")
-                    
-            # 3. If stored offset available, use it to verify
-            if "timezone_offset" in last_action:
-                logger.info(f"Original timezone offset: {last_action['timezone_offset']}")
+        if last_action and "timestamp" in last_action:
+            last_updated = last_action["timestamp"]
     except Exception as e:
         logger.error(f"Error retrieving last maintenance action: {str(e)}")
     
