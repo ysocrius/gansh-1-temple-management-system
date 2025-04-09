@@ -392,16 +392,12 @@ def maintenance_settings():
         maintenance_file = 'maintenance_status.json'
         logger.error(f"Error with maintenance file path, using fallback: {str(e)}")
     
-    # Generate a unique timestamp to ensure it's always different
+    # Use Unix timestamp to avoid timezone confusion
+    unix_timestamp = int(time.time())
     current_time = datetime.datetime.now()
-    ist_time = current_time + datetime.timedelta(hours=5, minutes=30)
     
-    # Format with a random millisecond component to ensure uniqueness
-    random_ms = random.randint(0, 999)
-    timestamp_str = ist_time.strftime(f'%Y-%m-%d %H:%M:%S.{random_ms:03d}')
-    
-    # Log debug info
-    logger.info(f"TIMESTAMP DEBUG - Current time: {current_time}, IST time: {ist_time}, Formatted: {timestamp_str}")
+    # For debugging
+    logger.info(f"TIMESTAMP DEBUG - Current time: {current_time}, Unix timestamp: {unix_timestamp}")
     
     if request.method == "POST":
         action = request.form.get("action")
@@ -421,8 +417,8 @@ def maintenance_settings():
             if end_time:
                 current_app.config["MAINTENANCE_END_TIME"] = end_time
             
-            # Generate a new unique timestamp for this action
-            action_timestamp = f"{timestamp_str} ({time.time():.0f})"
+            # Generate a new Unix timestamp for this action
+            unix_timestamp = int(time.time())
             
             # Save to file for persistence
             try:
@@ -430,10 +426,10 @@ def maintenance_settings():
                     json.dump({
                         "maintenance_mode": True,
                         "end_time": end_time,
-                        "last_updated": action_timestamp,
+                        "last_updated_unix": unix_timestamp,
                         "action": "enabled"
                     }, f)
-                logger.info(f"Maintenance mode enabled and saved to {maintenance_file} at {action_timestamp}")
+                logger.info(f"Maintenance mode enabled and saved to {maintenance_file} at {unix_timestamp}")
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
             
@@ -443,8 +439,8 @@ def maintenance_settings():
             # Disable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = False
             
-            # Generate a new unique timestamp for this action
-            action_timestamp = f"{timestamp_str} ({time.time():.0f})"
+            # Generate a new Unix timestamp for this action
+            unix_timestamp = int(time.time())
             
             # Save to file for persistence
             try:
@@ -452,10 +448,10 @@ def maintenance_settings():
                     json.dump({
                         "maintenance_mode": False,
                         "end_time": "",
-                        "last_updated": action_timestamp,
+                        "last_updated_unix": unix_timestamp,
                         "action": "disabled"
                     }, f)
-                logger.info(f"Maintenance mode disabled and saved to {maintenance_file} at {action_timestamp}")
+                logger.info(f"Maintenance mode disabled and saved to {maintenance_file} at {unix_timestamp}")
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
             
@@ -467,18 +463,18 @@ def maintenance_settings():
     bypass_ips = current_app.config.get("MAINTENANCE_BYPASS_IPS", ["127.0.0.1"])
     
     # Read directly from the file for the last updated timestamp
-    # If no timestamp is found, use the current generated one
-    last_updated_str = timestamp_str
+    # Using Unix timestamp to avoid timezone issues
+    last_updated_unix = unix_timestamp
     
     try:
         if os.path.exists(maintenance_file):
             with open(maintenance_file, 'r') as f:
                 maintenance_data = json.load(f)
-                if "last_updated" in maintenance_data:
-                    last_updated_str = maintenance_data["last_updated"]
-                    logger.info(f"Found last_updated in file: {last_updated_str}")
+                if "last_updated_unix" in maintenance_data:
+                    last_updated_unix = maintenance_data["last_updated_unix"]
+                    logger.info(f"Found last_updated_unix in file: {last_updated_unix}")
                 else:
-                    logger.warning("No last_updated field in maintenance data, using current timestamp")
+                    logger.warning("No last_updated_unix field in maintenance data, using current timestamp")
         else:
             logger.warning(f"Maintenance file not found at {maintenance_file}, using current timestamp")
     except Exception as e:
@@ -490,7 +486,7 @@ def maintenance_settings():
         maintenance_mode=maintenance_mode,
         maintenance_end_time=maintenance_end_time,
         bypass_ips=bypass_ips,
-        last_updated_str=last_updated_str
+        last_updated_unix=last_updated_unix
     ))
     
     # Add aggressive cache control headers
@@ -543,10 +539,8 @@ def maintenance_emergency_reset():
     if request.method == "POST":
         reset_action = request.form.get("reset_action", "disable")
         
-        # Get current time with IST adjustment
-        current_time = datetime.datetime.now()
-        ist_time = current_time + datetime.timedelta(hours=5, minutes=30)
-        timestamp_str = ist_time.strftime('%Y-%m-%d %H:%M:%S')
+        # Get current Unix timestamp
+        unix_timestamp = int(time.time())
         
         # Path to maintenance status file
         try:
@@ -566,28 +560,26 @@ def maintenance_emergency_reset():
             maintenance_mode = (reset_action == "enable")
             current_app.config["MAINTENANCE_MODE"] = maintenance_mode
             
-            # Generate a unique timestamp string
-            unique_timestamp = f"{timestamp_str} (Reset {int(time.time())})"
-            
-            # Create maintenance file with fresh data
+            # Create maintenance file with fresh data using Unix timestamp
             with open(maintenance_file, 'w') as f:
                 json.dump({
                     "maintenance_mode": maintenance_mode,
                     "end_time": "24 hours" if maintenance_mode else "",
-                    "last_updated": unique_timestamp,
+                    "last_updated_unix": unix_timestamp,
                     "action": "emergency_reset",
-                    "reset_time": int(time.time())
+                    "reset_time": unix_timestamp
                 }, f)
                 
             flash(f"Maintenance mode emergency reset to: {'ENABLED' if maintenance_mode else 'DISABLED'}", "success")
-            logger.info(f"Emergency reset performed: maintenance mode set to {maintenance_mode}")
+            logger.info(f"Emergency reset performed: maintenance mode set to {maintenance_mode}, timestamp: {unix_timestamp}")
             
             # Log the action in database as well
             try:
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
                     "action": f"maintenance_emergency_{reset_action}",
-                    "timestamp": ist_time,
+                    "timestamp": datetime.datetime.now(),
+                    "unix_timestamp": unix_timestamp,
                     "emergency_reset": True,
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string

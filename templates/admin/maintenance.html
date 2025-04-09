@@ -27,7 +27,7 @@
     </div>
     <div class="status-text">
         <h3>Current Status: {% if maintenance_mode %}ENABLED{% else %}DISABLED{% endif %}</h3>
-        <p>Last updated: {{ last_updated_str }} (IST)</p>
+        <p>Last updated: <span id="last-updated-time">Loading...</span> <span id="timezone-display"></span></p>
     </div>
     <div class="status-action">
         <a href="{{ url_for('admin.maintenance_settings') }}?nocache={{ range(1, 1000000) | random }}" class="refresh-btn">
@@ -35,6 +35,9 @@
         </a>
     </div>
 </div>
+
+<!-- Pass the Unix timestamp to JavaScript -->
+<input type="hidden" id="last-updated-unix" value="{{ last_updated_unix }}">
 
 <!-- Two-column layout with fixed left column -->
 <div class="maintenance-container">
@@ -96,11 +99,33 @@
 </div>
 
 <script>
-// Current time formatting
+// Format the Unix timestamp to local time
+function formatUnixTimestamp(unixTimestamp) {
+    const date = new Date(unixTimestamp * 1000); // Convert to milliseconds
+    return date.toLocaleString('en-US', { 
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true
+    });
+}
+
+// Current time formatting with milliseconds
 function formatTime(date) {
     return date.toLocaleTimeString() + "." + 
            date.getMilliseconds().toString().padStart(3, '0');
 }
+
+// Convert the Unix timestamp to local time
+const unixTimestamp = document.getElementById('last-updated-unix').value;
+document.getElementById('last-updated-time').textContent = formatUnixTimestamp(unixTimestamp);
+
+// Show timezone
+const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+document.getElementById('timezone-display').textContent = '(' + timezone + ')';
 
 // Display the current time the page was loaded
 const loadTime = new Date();
