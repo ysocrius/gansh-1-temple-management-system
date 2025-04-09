@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from database import user_collection, seva_collection, donations_collection, admin_log
 from bson.objectid import ObjectId
 import datetime
+from datetime import timezone, timedelta
 import json
 import os
 import sys
@@ -412,12 +413,14 @@ def maintenance_settings():
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
             
-            # Log the action
+            # Log the action with IST timezone (UTC+5:30)
             try:
+                # Create timestamp with explicit timezone (India Standard Time)
+                current_time = datetime.datetime.now(timezone(timedelta(hours=5, minutes=30)))
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
                     "action": "maintenance_enabled",
-                    "timestamp": datetime.datetime.now(),
+                    "timestamp": current_time,
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string,
                     "end_time": end_time
@@ -442,12 +445,14 @@ def maintenance_settings():
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
             
-            # Log the action
+            # Log the action with IST timezone (UTC+5:30)
             try:
+                # Create timestamp with explicit timezone (India Standard Time)
+                current_time = datetime.datetime.now(timezone(timedelta(hours=5, minutes=30)))
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
                     "action": "maintenance_disabled",
-                    "timestamp": datetime.datetime.now(),
+                    "timestamp": current_time,
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string
                 })
@@ -461,15 +466,20 @@ def maintenance_settings():
     maintenance_end_time = current_app.config.get("MAINTENANCE_END_TIME", "24 hours")
     bypass_ips = current_app.config.get("MAINTENANCE_BYPASS_IPS", ["127.0.0.1"])
     
-    # Get the last maintenance action for the timestamp
-    last_updated = datetime.datetime.now()
+    # Get the last maintenance action for the timestamp - use IST timezone for default value
+    last_updated = datetime.datetime.now(timezone(timedelta(hours=5, minutes=30)))
     try:
         last_action = admin_log.find_one(
             {"action": {"$in": ["maintenance_enabled", "maintenance_disabled"]}},
             sort=[("timestamp", -1)]
         )
         if last_action and "timestamp" in last_action:
-            last_updated = last_action["timestamp"]
+            # If timestamp doesn't have timezone info, add it explicitly (IST timezone)
+            timestamp = last_action["timestamp"]
+            if timestamp.tzinfo is None:
+                # Add IST timezone (UTC+5:30) to naive datetime
+                timestamp = timestamp.replace(tzinfo=timezone(timedelta(hours=5, minutes=30)))
+            last_updated = timestamp
     except Exception as e:
         logger.error(f"Error retrieving last maintenance action: {str(e)}")
     

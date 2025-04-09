@@ -5,6 +5,10 @@ import threading
 import time
 import logging
 from werkzeug.serving import is_running_from_reloader
+from datetime import datetime, timezone, timedelta
+
+# Set timezone environment variable for consistent timezone handling
+os.environ['TZ'] = 'Asia/Kolkata'  # Set timezone to IST
 
 # Configure logging with more verbose output
 logging.basicConfig(
