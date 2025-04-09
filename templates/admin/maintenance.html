@@ -21,7 +21,7 @@
     </div>
     <div class="status-text">
         <h3>Current Status: {% if maintenance_mode %}ENABLED{% else %}DISABLED{% endif %}</h3>
-        <p>Last updated: {{ last_updated.strftime('%Y-%m-%d %H:%M:%S') }} IST</p>
+        <p>Last updated: {{ last_updated.strftime('%Y-%m-%d %H:%M:%S') }} (IST)</p>
     </div>
     <div class="status-action">
         <a href="{{ url_for('admin.maintenance_settings') }}" class="refresh-btn">
