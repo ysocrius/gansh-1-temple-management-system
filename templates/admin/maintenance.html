@@ -51,6 +51,9 @@
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>Maintenance mode is active</p>
                     <p class="completion-time">Expected completion: <strong>{{ maintenance_end_time }}</strong></p>
+                    <div class="maintenance-duration">
+                        <p><i class="fas fa-stopwatch"></i> Duration: <span id="maintenance-timer">Calculating...</span></p>
+                    </div>
                 </div>
                 
                 <form method="POST" action="{{ url_for('admin.maintenance_settings') }}">
@@ -120,6 +123,37 @@ function formatCurrentTime(date) {
 
 // Display the current load time
 document.getElementById('page-load-time').textContent = formatCurrentTime(new Date());
+
+// Maintenance mode duration timer
+const maintenanceTimerElement = document.getElementById('maintenance-timer');
+if (maintenanceTimerElement) {
+  // Function to format duration in a readable format
+  function formatDuration(durationInSeconds) {
+    const days = Math.floor(durationInSeconds / 86400);
+    const hours = Math.floor((durationInSeconds % 86400) / 3600);
+    const minutes = Math.floor((durationInSeconds % 3600) / 60);
+    const seconds = Math.floor(durationInSeconds % 60);
+    
+    let formattedTime = '';
+    if (days > 0) formattedTime += `${days}d `;
+    if (hours > 0 || days > 0) formattedTime += `${hours}h `;
+    if (minutes > 0 || hours > 0 || days > 0) formattedTime += `${minutes}m `;
+    formattedTime += `${seconds}s`;
+    
+    return formattedTime;
+  }
+  
+  // Update the timer every second
+  function updateMaintenanceTimer() {
+    const now = Math.floor(Date.now() / 1000);
+    const elapsedSeconds = now - unixTimestamp;
+    maintenanceTimerElement.textContent = formatDuration(elapsedSeconds);
+  }
+  
+  // Initial update and then every second
+  updateMaintenanceTimer();
+  setInterval(updateMaintenanceTimer, 1000);
+}
 </script>
 
 <style>
@@ -373,6 +407,29 @@ document.getElementById('page-load-time').textContent = formatCurrentTime(new Da
         .preview-frame-container {
             height: 500px;
         }
+    }
+
+    .maintenance-duration {
+        margin-top: 10px;
+        background-color: rgba(220, 53, 69, 0.1);
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+    }
+
+    .maintenance-duration p {
+        margin: 0;
+    }
+
+    .maintenance-duration i {
+        color: #dc3545;
+        margin-right: 5px;
+    }
+
+    #maintenance-timer {
+        font-weight: bold;
+        font-family: monospace;
+        font-size: 1.1em;
     }
 </style>
 {% endblock %} 
