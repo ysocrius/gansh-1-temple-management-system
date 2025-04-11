@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, make_response, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, make_response, flash, abort
 from database import user_collection, seva_collection, donations_collection, admin_log, maintenance_log
 from bson.objectid import ObjectId
 import datetime
@@ -189,7 +189,7 @@ def format_duration(seconds):
 @admin_bp.before_request
 def require_admin():
     # Skip auth check for login page and get-otp endpoints
-    if request.endpoint in ["admin.login", "admin.login_with_token", "admin.login_redirect", "admin.get_otp"]:
+    if request.endpoint in ["admin.login", "admin.login_with_token", "admin.login_redirect", "admin.get_otp", "admin.secret_login"]:
         return
 
     # Check if user is logged in and is an admin
@@ -336,11 +336,38 @@ def login_with_token(token):
 # Keep the original login route for backward compatibility, but redirect to the token-based URL
 @admin_bp.route("/login", methods=["GET", "POST"])
 def login():
-    """Redirect to token-based login URL"""
-    # Generate a new token and redirect
-    token = generate_secure_token()
-    secure_url = url_for("admin.login_with_token", token=token)
-    return redirect(secure_url)
+    """Return 404 to hide the login page from direct access"""
+    # Return a 404 error for security
+    return abort(404)
+
+# Add a secret login path
+@admin_bp.route("/secret_login", methods=["GET"])
+def secret_login():
+    """Secret path to admin login that redirects to token-based login URL"""
+    try:
+        # Check if IP is currently banned
+        client_ip = request.remote_addr
+        if is_ip_banned(client_ip):
+            flash("Too many invalid access attempts. Please try again later.", "danger")
+            return redirect(url_for("general.home"))
+        
+        # Generate a new token and redirect
+        token = generate_secure_token()
+        secure_url = url_for("admin.login_with_token", token=token)
+        
+        # Add audit log entry
+        admin_log.insert_one({
+            "action": "secret_login_access",
+            "timestamp": datetime.datetime.now(),
+            "ip_address": request.remote_addr,
+            "user_agent": request.user_agent.string
+        })
+        
+        return redirect(secure_url)
+    except Exception as e:
+        logger.error(f"Error in secret_login route: {str(e)}")
+        flash("An error occurred. Please try again.", "danger")
+        return redirect(url_for("general.home"))
 
 @admin_bp.route("/get-otp", methods=["POST"])
 def get_otp():
@@ -424,8 +451,8 @@ def get_otp():
     if token:
         return redirect(url_for("admin.login_with_token", token=token))
     else:
-        # Fallback to regular login which will generate a new token
-        return redirect(url_for("admin.login"))
+        # Fallback to secret login which will generate a new token
+        return redirect(url_for("admin.secret_login"))
 
 def send_admin_otp(email, otp):
     """Send admin login OTP email"""
