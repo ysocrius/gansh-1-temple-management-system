@@ -50,8 +50,8 @@ def format_duration(seconds):
 # Authentication middleware for admin routes
 @admin_bp.before_request
 def require_admin():
-    # Skip auth check for login page and get-otp endpoints
-    if request.endpoint in ["admin.login", "admin.get_otp"]:
+    # Skip auth check for login page, get-otp endpoints, and the secure login route
+    if request.endpoint in ["admin.login", "admin.get_otp", "admin.sec_login"]:
         return
 
     # Check if user is logged in and is an admin
@@ -66,6 +66,40 @@ def require_admin():
         
         return response
 
+# Special route for admin login during maintenance mode
+@admin_bp.route("/sec_login")
+def sec_login():
+    """Secondary admin login route that works during maintenance mode"""
+    # Generate a secure hash for the admin login URL
+    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?'
+    length = 64
+    result = ''
+    result += str(int(time.time())) # Add timestamp for uniqueness
+    
+    # Add random characters to fill the remaining length
+    for i in range(len(result), length):
+        result += characters[random.randint(0, len(characters) - 1)]
+    
+    # Encode the hash for URL
+    import urllib.parse
+    hash_value = urllib.parse.quote(result)
+    
+    # Log this special access attempt
+    logger.info(f"Admin secure login accessed from {request.remote_addr}")
+    
+    # Add to admin audit log
+    admin_log.insert_one({
+        "email": "admin_system",
+        "action": "sec_login_accessed",
+        "timestamp": datetime.datetime.now(),
+        "ip_address": request.remote_addr,
+        "user_agent": request.user_agent.string,
+        "maintenance_active": True
+    })
+    
+    # Redirect to the hashed login URL
+    return redirect(url_for("admin.login", hash_value=hash_value))
+
 @admin_bp.after_request
 def add_cache_headers(response):
     """Add cache control headers to all admin routes"""
@@ -78,8 +112,13 @@ def add_cache_headers(response):
     return response
 
 @admin_bp.route("/login", methods=["GET", "POST"])
-def login():
+@admin_bp.route("/login/hashed=<string:hash_value>", methods=["GET", "POST"])
+def login(hash_value=None):
     """Admin Login Page with OTP Verification"""
+    # Log the hash value for debugging
+    if hash_value:
+        logger.info(f"Admin login accessed with hash: {hash_value}")
+    
     if request.method == "POST":
         entered_otp = request.form.get("otp")
         
@@ -113,7 +152,8 @@ def login():
                 "action": "login_success",
                 "timestamp": datetime.datetime.now(),
                 "ip_address": request.remote_addr,
-                "user_agent": request.user_agent.string
+                "user_agent": request.user_agent.string,
+                "hash_value": hash_value
             })
             
             flash("Login successful! Welcome to the admin panel.", "success")
@@ -137,7 +177,8 @@ def login():
                     "timestamp": datetime.datetime.now(),
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string,
-                    "entered_otp": entered_otp
+                    "entered_otp": entered_otp,
+                    "hash_value": hash_value
                 })
                 flash("Invalid OTP. Please try again.", "danger")
 
@@ -162,6 +203,9 @@ def login():
 def get_otp():
     """Generate and send OTP to admin email"""
     try:
+        # Capture the return path if provided
+        return_path = request.form.get("return_path", url_for("admin.login"))
+        
         # Invalidate any existing OTPs
         admin_log.update_many(
             {
@@ -185,7 +229,8 @@ def get_otp():
             "expires_at": expiration_time,
             "is_used": False,
             "request_ip": request.remote_addr,
-            "user_agent": request.user_agent.string
+            "user_agent": request.user_agent.string,
+            "return_path": return_path
         }
         admin_log.insert_one(otp_record)
         
@@ -198,7 +243,8 @@ def get_otp():
             "action": "otp_generated",
             "timestamp": datetime.datetime.now(),
             "ip_address": request.remote_addr,
-            "user_agent": request.user_agent.string
+            "user_agent": request.user_agent.string,
+            "return_path": return_path
         })
         
         flash("OTP sent to admin email. Please check your inbox.", "success")
@@ -213,8 +259,10 @@ def get_otp():
             "user_agent": request.user_agent.string
         })
         flash(f"Failed to send OTP: {str(e)}", "danger")
+        return_path = url_for("admin.login")
     
-    return redirect(url_for("admin.login"))
+    # Redirect to the return path (hashed login URL or default login URL)
+    return redirect(return_path)
 
 def send_admin_otp(email, otp):
     """Send admin login OTP email"""

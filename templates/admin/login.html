@@ -166,7 +166,7 @@
                     <i class="fas fa-info-circle me-2"></i>Please enter the 6-digit OTP sent to the admin email.
                 </div>
                 
-                <form method="POST" action="{{ url_for('admin.login') }}">
+                <form method="POST" action="{{ request.path }}">
                     <div class="mb-3 otp-container">
                         <label for="otp" class="form-label">One-Time Password (OTP)</label>
                         <input type="text" class="form-control otp-input" id="otp" name="otp" required maxlength="6" placeholder="• • • • • •" autofocus>
@@ -181,6 +181,7 @@
                 
                 <div class="text-center mt-3">
                     <form method="POST" action="{{ url_for('admin.get_otp') }}">
+                        <input type="hidden" name="return_path" value="{{ request.path }}">
                         <button type="submit" class="btn btn-link">Request New OTP</button>
                     </form>
                 </div>

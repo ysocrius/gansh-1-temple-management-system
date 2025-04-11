@@ -424,7 +424,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link login-btn admin-login-btn" href="{{ url_for('admin.login') }}">
+                            <a class="nav-link login-btn admin-login-btn" href="#" onclick="navigateToHashedAdminLogin(event)">
                                 <i class="fas fa-user-shield me-1"></i> Admin Login
                             </a>
                         </li>
@@ -492,6 +492,36 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Admin Login Secure Hash Generator -->
+    <script>
+        function navigateToHashedAdminLogin(event) {
+            event.preventDefault();
+            
+            // Generate a complex random hash (64 characters)
+            const generateSecureHash = () => {
+                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
+                const length = 64;
+                let result = '';
+                const charactersLength = characters.length;
+                
+                // Add timestamp to ensure uniqueness
+                result += Date.now().toString(36);
+                
+                // Add random characters to fill the remaining length
+                for (let i = result.length; i < length; i++) {
+                    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                }
+                
+                // Encode the hash to make it URL-safe
+                return encodeURIComponent(result);
+            };
+            
+            // Generate the hash and navigate
+            const hash = generateSecureHash();
+            window.location.href = "{{ url_for('admin.login') }}/hashed=" + hash;
+        }
+    </script>
     
     <!-- CSRF Protection Script -->
     <script>
