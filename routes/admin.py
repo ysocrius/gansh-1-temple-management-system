@@ -412,6 +412,7 @@ def maintenance_settings():
     # Path to store maintenance status
     try:
         maintenance_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'maintenance_status.json')
+        logger.info(f"Using maintenance file path: {maintenance_file}")
     except Exception as e:
         # Fallback to a simple path if there's an issue
         maintenance_file = 'maintenance_status.json'
@@ -421,8 +422,14 @@ def maintenance_settings():
     unix_timestamp = int(time.time())
     current_time = datetime.datetime.now()
     
+    # Extra debug logging for current state
+    logger.info(f"Current maintenance mode state: {current_app.config.get('MAINTENANCE_MODE', False)}")
+    logger.info(f"Current session data: {dict(session)}")
+    logger.info(f"Current remote IP: {request.remote_addr}")
+    
     if request.method == "POST":
         action = request.form.get("action")
+        logger.info(f"Maintenance POST request received with action: {action}")
         
         if action == "enable":
             # Check if there's a previous disabled log to calculate uptime
@@ -436,6 +443,8 @@ def maintenance_settings():
                 if last_disabled and "timestamp_unix" in last_disabled:
                     # Calculate how long the site was up (in seconds)
                     uptime_duration = unix_timestamp - last_disabled["timestamp_unix"]
+                logger.info(f"Last disabled record: {last_disabled}")
+                logger.info(f"Calculated uptime duration: {uptime_duration}")
             except Exception as e:
                 logger.error(f"Error calculating uptime duration: {str(e)}")
                 uptime_duration = None
@@ -447,25 +456,38 @@ def maintenance_settings():
             if end_time:
                 current_app.config["MAINTENANCE_END_TIME"] = end_time
             
+            logger.info(f"Setting maintenance mode to ENABLED with end time: {end_time}")
+            
             # Generate a new Unix timestamp for this action
             unix_timestamp = int(time.time())
             
             # Save to file for persistence
             try:
+                maintenance_data = {
+                    "maintenance_mode": True,
+                    "end_time": end_time,
+                    "last_updated_unix": unix_timestamp,
+                    "action": "enabled"
+                }
+                
                 with open(maintenance_file, 'w') as f:
-                    json.dump({
-                        "maintenance_mode": True,
-                        "end_time": end_time,
-                        "last_updated_unix": unix_timestamp,
-                        "action": "enabled"
-                    }, f)
+                    json.dump(maintenance_data, f)
                 logger.info(f"Maintenance mode enabled and saved to {maintenance_file} at {unix_timestamp}")
+                logger.info(f"Saved maintenance data: {maintenance_data}")
+                
+                # Verify the file was written correctly by reading it back
+                try:
+                    with open(maintenance_file, 'r') as f:
+                        verify_data = json.load(f)
+                    logger.info(f"Verification of saved data: {verify_data}")
+                except Exception as e:
+                    logger.error(f"Error verifying saved maintenance data: {str(e)}")
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
             
             # Log to maintenance_log collection
             try:
-                maintenance_log.insert_one({
+                log_entry = {
                     "action": "enabled",
                     "timestamp_unix": unix_timestamp,
                     "timestamp": datetime.datetime.fromtimestamp(unix_timestamp),
@@ -475,12 +497,17 @@ def maintenance_settings():
                     "end_time": end_time,
                     "uptime_duration": uptime_duration,  # How long the site was up before maintenance
                     "uptime_formatted": format_duration(uptime_duration) if uptime_duration else None
-                })
+                }
+                maintenance_log.insert_one(log_entry)
                 logger.info(f"Maintenance mode enabled logged to maintenance_log at {unix_timestamp}")
+                logger.info(f"Log entry: {log_entry}")
             except Exception as e:
                 logger.error(f"Error logging to maintenance_log: {str(e)}")
             
             flash("Maintenance mode enabled", "success")
+            
+            # Extra verification after enabling
+            logger.info(f"After enabling - Maintenance mode state: {current_app.config.get('MAINTENANCE_MODE', False)}")
         
         elif action == "disable":
             # Check if there's a previous enabled log to calculate downtime
@@ -494,32 +521,46 @@ def maintenance_settings():
                 if last_enabled and "timestamp_unix" in last_enabled:
                     # Calculate how long the site was down (in seconds)
                     downtime_duration = unix_timestamp - last_enabled["timestamp_unix"]
+                logger.info(f"Last enabled record: {last_enabled}")
+                logger.info(f"Calculated downtime duration: {downtime_duration}")
             except Exception as e:
                 logger.error(f"Error calculating downtime duration: {str(e)}")
                 downtime_duration = None
             
             # Disable maintenance mode
             current_app.config["MAINTENANCE_MODE"] = False
+            logger.info("Setting maintenance mode to DISABLED")
             
             # Generate a new Unix timestamp for this action
             unix_timestamp = int(time.time())
             
             # Save to file for persistence
             try:
+                maintenance_data = {
+                    "maintenance_mode": False,
+                    "end_time": "",
+                    "last_updated_unix": unix_timestamp,
+                    "action": "disabled"
+                }
+                
                 with open(maintenance_file, 'w') as f:
-                    json.dump({
-                        "maintenance_mode": False,
-                        "end_time": "",
-                        "last_updated_unix": unix_timestamp,
-                        "action": "disabled"
-                    }, f)
+                    json.dump(maintenance_data, f)
                 logger.info(f"Maintenance mode disabled and saved to {maintenance_file} at {unix_timestamp}")
+                logger.info(f"Saved maintenance data: {maintenance_data}")
+                
+                # Verify the file was written correctly by reading it back
+                try:
+                    with open(maintenance_file, 'r') as f:
+                        verify_data = json.load(f)
+                    logger.info(f"Verification of saved data: {verify_data}")
+                except Exception as e:
+                    logger.error(f"Error verifying saved maintenance data: {str(e)}")
             except Exception as e:
                 logger.error(f"Error saving maintenance status: {str(e)}")
             
             # Log to maintenance_log collection
             try:
-                maintenance_log.insert_one({
+                log_entry = {
                     "action": "disabled",
                     "timestamp_unix": unix_timestamp,
                     "timestamp": datetime.datetime.fromtimestamp(unix_timestamp),
@@ -528,12 +569,17 @@ def maintenance_settings():
                     "user_agent": request.user_agent.string,
                     "downtime_duration": downtime_duration,  # How long the site was down
                     "downtime_formatted": format_duration(downtime_duration) if downtime_duration else None
-                })
+                }
+                maintenance_log.insert_one(log_entry)
                 logger.info(f"Maintenance mode disabled logged to maintenance_log at {unix_timestamp}")
+                logger.info(f"Log entry: {log_entry}")
             except Exception as e:
                 logger.error(f"Error logging to maintenance_log: {str(e)}")
             
             flash("Maintenance mode disabled", "success")
+            
+            # Extra verification after disabling
+            logger.info(f"After disabling - Maintenance mode state: {current_app.config.get('MAINTENANCE_MODE', False)}")
     
     # Get current settings
     maintenance_mode = current_app.config.get("MAINTENANCE_MODE", False)
@@ -548,11 +594,17 @@ def maintenance_settings():
         if os.path.exists(maintenance_file):
             with open(maintenance_file, 'r') as f:
                 maintenance_data = json.load(f)
+                logger.info(f"Read maintenance file during page load: {maintenance_data}")
+                
                 if "last_updated_unix" in maintenance_data:
                     last_updated_unix = maintenance_data["last_updated_unix"]
                     logger.info(f"Found last_updated_unix in file: {last_updated_unix}")
                 else:
                     logger.warning("No last_updated_unix field in maintenance data, using current timestamp")
+                
+                # Verify that the current_app config matches the file
+                if maintenance_mode != maintenance_data.get("maintenance_mode", False):
+                    logger.warning(f"Maintenance mode mismatch: app={maintenance_mode}, file={maintenance_data.get('maintenance_mode')}")
         else:
             logger.warning(f"Maintenance file not found at {maintenance_file}, using current timestamp")
     except Exception as e:

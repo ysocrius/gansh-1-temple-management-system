@@ -17,19 +17,78 @@ app = Flask(__name__)
 # Load configuration from Config class
 app.config.from_object(Config)
 
-# Load maintenance mode status from file if exists
-try:
+# Function to read maintenance status from file
+def load_maintenance_status():
+    """Load maintenance mode status from file and apply to app config"""
+    try:
+        import json
+        maintenance_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'maintenance_status.json')
+        if os.path.exists(maintenance_file):
+            with open(maintenance_file, 'r') as f:
+                maintenance_data = json.load(f)
+                # Update app config with file data
+                app.config["MAINTENANCE_MODE"] = maintenance_data.get("maintenance_mode", False)
+                if "end_time" in maintenance_data and maintenance_data["end_time"]:
+                    app.config["MAINTENANCE_END_TIME"] = maintenance_data["end_time"]
+                
+                # Add additional debug logging
+                logger.info(f"Loaded maintenance mode status from file: ENABLED={app.config['MAINTENANCE_MODE']}")
+                logger.info(f"Maintenance mode end time: {app.config.get('MAINTENANCE_END_TIME')}")
+                logger.info(f"Full maintenance data from file: {maintenance_data}")
+                
+                # Ensure MAINTENANCE_BYPASS_IPS is preserved from config and not overwritten
+                logger.info(f"Maintenance bypass IPs: {app.config.get('MAINTENANCE_BYPASS_IPS')}")
+                
+                return maintenance_data
+        else:
+            logger.warning(f"Maintenance file not found at {maintenance_file}, using default config settings")
+    except Exception as e:
+        logger.error(f"Error loading maintenance status: {str(e)}")
+    
+    # In case of error, ensure maintenance mode is set according to config
+    app.config["MAINTENANCE_MODE"] = Config.MAINTENANCE_MODE
+    logger.info(f"Using config default for maintenance mode: {app.config['MAINTENANCE_MODE']}")
+    return None
+
+# Setup a background thread to periodically verify maintenance mode
+def verify_maintenance_mode():
+    """Background thread to verify maintenance mode settings are preserved"""
+    import time
     import json
-    maintenance_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'maintenance_status.json')
-    if os.path.exists(maintenance_file):
-        with open(maintenance_file, 'r') as f:
-            maintenance_data = json.load(f)
-            app.config["MAINTENANCE_MODE"] = maintenance_data.get("maintenance_mode", False)
-            if "end_time" in maintenance_data and maintenance_data["end_time"]:
-                app.config["MAINTENANCE_END_TIME"] = maintenance_data["end_time"]
-        logger.info(f"Loaded maintenance mode status: {app.config.get('MAINTENANCE_MODE')}")
-except Exception as e:
-    logger.error(f"Error loading maintenance status: {str(e)}")
+    import os
+    
+    while True:
+        try:
+            # Sleep for 30 seconds between checks
+            time.sleep(30)
+            
+            # Check if maintenance file exists
+            maintenance_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'maintenance_status.json')
+            if os.path.exists(maintenance_file):
+                with open(maintenance_file, 'r') as f:
+                    maintenance_data = json.load(f)
+                    file_mode = maintenance_data.get("maintenance_mode", False)
+                    app_mode = app.config.get("MAINTENANCE_MODE", False)
+                    
+                    # If there's a mismatch, log it and restore from file
+                    if file_mode != app_mode:
+                        logger.warning(f"Maintenance mode mismatch detected in background thread: app={app_mode}, file={file_mode}")
+                        logger.warning("Restoring maintenance mode from file")
+                        app.config["MAINTENANCE_MODE"] = file_mode
+                        logger.info(f"Maintenance mode restored to: {app.config['MAINTENANCE_MODE']}")
+                    else:
+                        logger.debug("Maintenance mode verification: status matches file configuration")
+        except Exception as e:
+            logger.error(f"Error in maintenance mode verification thread: {str(e)}")
+
+# Load maintenance status at startup
+maintenance_data = load_maintenance_status()
+
+# Start background verification thread
+import threading
+maintenance_thread = threading.Thread(target=verify_maintenance_mode, daemon=True)
+maintenance_thread.start()
+logger.info("Started maintenance mode verification background thread")
 
 # Initialize CSRF protection
 csrf = CSRFProtect(app)

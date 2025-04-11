@@ -25,9 +25,9 @@ class Config:
     
     # ✅ Maintenance Mode Configuration
     MAINTENANCE_MODE = os.getenv("MAINTENANCE_MODE", "False").lower() == "true"
-    # Restore original configuration for production
-    #MAINTENANCE_BYPASS_IPS = os.getenv("MAINTENANCE_BYPASS_IPS", "127.0.0.1").split(",")
-    MAINTENANCE_BYPASS_IPS = []  # Empty list for testing - remove this line when done testing
+    # Use environment variable or default to localhost, make sure admin IPs can always access
+    MAINTENANCE_BYPASS_IPS = os.getenv("MAINTENANCE_BYPASS_IPS", "127.0.0.1").split(",")
+    # Allow admin paths to always be accessible
     MAINTENANCE_BYPASS_PATHS = [
         '/static/',  # Allow static resources
         '/favicon.ico',
