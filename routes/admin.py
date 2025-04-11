@@ -12,7 +12,7 @@ from flask_mail import Message
 from utils.mail import mail
 import secrets
 import hashlib
-from werkzeug.security import safe_str_cmp
+import hmac
 
 # Configure logger
 logger = logging.getLogger(__name__)
