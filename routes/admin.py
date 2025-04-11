@@ -119,106 +119,156 @@ def add_cache_headers(response):
 @admin_bp.route("/login/hashed=<string:hash_value>", methods=["GET", "POST"])
 def login(hash_value=None):
     """Admin Login Page with OTP Verification"""
-    # If accessed directly without hash, return 404
-    if hash_value is None and request.path == "/admin/login":
-        logger.info(f"Blocked direct access to admin login from IP: {request.remote_addr}, User-Agent: {request.user_agent}")
-        return render_template('errors/404.html'), 404
-    
-    # Log the hash value for debugging
-    if hash_value:
-        logger.info(f"Admin login accessed with hash: {hash_value}")
-    
-    if request.method == "POST":
-        entered_otp = request.form.get("otp")
+    try:
+        logger.info(f"Admin login accessed - Path: {request.path}, Method: {request.method}, Hash: {hash_value}")
         
-        # Find active OTP in the database
-        otp_record = admin_log.find_one({
-            "email": ADMIN_EMAIL,
-            "otp": entered_otp,
-            "expires_at": {"$gt": datetime.datetime.now()},
-            "is_used": False
-        })
+        # If accessed directly without hash, return 404
+        if hash_value is None and request.path == "/admin/login":
+            logger.warning(f"Blocked direct access to admin login from IP: {request.remote_addr}, User-Agent: {request.user_agent}")
+            return render_template('errors/404.html'), 404
         
-        if otp_record:
-            # Mark OTP as used
-            admin_log.update_one(
-                {"_id": otp_record["_id"]},
-                {"$set": {
-                    "is_used": True,
-                    "used_at": datetime.datetime.now()
-                }}
-            )
-            
-            # Set admin session
-            session["admin"] = True
-            if "user" not in session:
-                session["user"] = {}
-            session["user"]["is_admin"] = True
-            
-            # Add login audit
-            admin_log.insert_one({
-                "email": ADMIN_EMAIL,
-                "action": "login_success",
-                "timestamp": datetime.datetime.now(),
-                "ip_address": request.remote_addr,
-                "user_agent": request.user_agent.string,
-                "hash_value": hash_value
-            })
-            
-            flash("Login successful! Welcome to the admin panel.", "success")
-            return redirect(url_for("general_admin.admin_dashboard"))
+        # Validate hash value if provided
+        if hash_value:
+            logger.info(f"Admin login accessed with hash: {hash_value}")
         else:
-            # Check if OTP exists but is expired
-            expired_otp = admin_log.find_one({
+            # For added security, if someone tries to manipulate the URL
+            logger.warning(f"Attempt to access with empty hash from {request.remote_addr}")
+        
+        if request.method == "POST":
+            entered_otp = request.form.get("otp")
+            
+            if not entered_otp:
+                logger.warning(f"OTP form submitted without OTP value from {request.remote_addr}")
+                flash("Please enter the OTP sent to your email", "danger")
+                return render_template("admin/login.html", latest_otp=None) 
+            
+            # Find active OTP in the database
+            otp_record = admin_log.find_one({
                 "email": ADMIN_EMAIL,
                 "otp": entered_otp,
-                "expires_at": {"$lte": datetime.datetime.now()},
+                "expires_at": {"$gt": datetime.datetime.now()},
                 "is_used": False
             })
             
-            if expired_otp:
-                flash("OTP has expired. Please request a new one.", "danger")
-            else:
-                # Add failed login attempt to audit log
+            if otp_record:
+                # Mark OTP as used
+                admin_log.update_one(
+                    {"_id": otp_record["_id"]},
+                    {"$set": {
+                        "is_used": True,
+                        "used_at": datetime.datetime.now()
+                    }}
+                )
+                
+                # Set admin session
+                session["admin"] = True
+                if "user" not in session:
+                    session["user"] = {}
+                session["user"]["is_admin"] = True
+                
+                # Add login audit
                 admin_log.insert_one({
                     "email": ADMIN_EMAIL,
-                    "action": "login_failed",
+                    "action": "login_success",
                     "timestamp": datetime.datetime.now(),
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string,
-                    "entered_otp": entered_otp,
                     "hash_value": hash_value
                 })
-                flash("Invalid OTP. Please try again.", "danger")
+                
+                logger.info(f"Admin login successful for IP: {request.remote_addr}")
+                flash("Login successful! Welcome to the admin panel.", "success")
+                return redirect(url_for("general_admin.admin_dashboard"))
+            else:
+                # Check if OTP exists but is expired
+                expired_otp = admin_log.find_one({
+                    "email": ADMIN_EMAIL,
+                    "otp": entered_otp,
+                    "expires_at": {"$lte": datetime.datetime.now()},
+                    "is_used": False
+                })
+                
+                if expired_otp:
+                    logger.warning(f"Expired OTP used from IP: {request.remote_addr}")
+                    flash("OTP has expired. Please request a new one.", "danger")
+                else:
+                    # Check if OTP was already used
+                    used_otp = admin_log.find_one({
+                        "email": ADMIN_EMAIL,
+                        "otp": entered_otp,
+                        "is_used": True
+                    })
+                    
+                    if used_otp:
+                        logger.warning(f"Already used OTP attempted from IP: {request.remote_addr}")
+                        flash("This OTP has already been used. Please request a new one.", "danger")
+                    else:
+                        # Add failed login attempt to audit log
+                        admin_log.insert_one({
+                            "email": ADMIN_EMAIL,
+                            "action": "login_failed",
+                            "timestamp": datetime.datetime.now(),
+                            "ip_address": request.remote_addr,
+                            "user_agent": request.user_agent.string,
+                            "entered_otp": entered_otp,
+                            "hash_value": hash_value
+                        })
+                        logger.warning(f"Invalid OTP attempt from IP: {request.remote_addr}")
+                        flash("Invalid OTP. Please try again.", "danger")
 
-    # Get the most recent active OTP for the timer display
-    latest_otp = admin_log.find_one(
-        {
-            "email": ADMIN_EMAIL, 
-            "is_used": False,
-            "expires_at": {"$gt": datetime.datetime.now()}
-        },
-        sort=[("created_at", -1)]
-    )
-    
-    # Prevent caching of login page
-    response = make_response(render_template("admin/login.html", latest_otp=latest_otp))
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+        # Get the most recent active OTP for the timer display
+        latest_otp = admin_log.find_one(
+            {
+                "email": ADMIN_EMAIL, 
+                "is_used": False,
+                "expires_at": {"$gt": datetime.datetime.now()}
+            },
+            sort=[("created_at", -1)]
+        )
+        
+        # Prevent caching of login page
+        response = make_response(render_template("admin/login.html", latest_otp=latest_otp))
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in admin login route: {str(e)}", exc_info=True)
+        flash("An error occurred during login. Please try again.", "danger")
+        
+        # Generate a fallback hash in case of errors
+        fallback_hash = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=32))
+        return redirect(url_for("admin.login", hash_value=fallback_hash))
 
 @admin_bp.route("/get-otp", methods=["POST"])
 def get_otp():
     """Generate and send OTP to admin email"""
     try:
-        # Capture the return path if provided or generate a secure hash
-        return_path = request.form.get("return_path")
-        if not return_path or not "hashed=" in return_path:
-            # Generate a secure hash for fallback
-            characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-            hash_value = ''.join(random.choices(characters, k=32))
-            return_path = url_for("admin.login", hash_value=hash_value)
+        # Generate a fallback secure hash in case of issues
+        fallback_hash = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', k=32))
+        fallback_url = url_for("admin.login", hash_value=fallback_hash, _external=True)
+        
+        # Capture the return path if provided
+        return_path = request.form.get("return_path", "")
+        logger.info(f"Get OTP requested with return_path: {return_path}")
+        
+        # Validate the return path - make sure it's a valid URL and contains our domain
+        is_valid_return_path = False
+        if return_path:
+            try:
+                if "hashed=" in return_path and "/admin/login/" in return_path:
+                    is_valid_return_path = True
+                    logger.info(f"Return path validated: {return_path}")
+                else:
+                    logger.warning(f"Invalid return path format: {return_path}")
+            except:
+                logger.warning(f"Invalid return path: {return_path}")
+        
+        # If return path is not valid, use the fallback
+        if not is_valid_return_path:
+            logger.warning(f"Using fallback URL: {fallback_url}")
+            return_path = fallback_url
         
         # Invalidate any existing OTPs
         admin_log.update_many(
@@ -264,6 +314,7 @@ def get_otp():
         flash("OTP sent to admin email. Please check your inbox.", "success")
     except Exception as e:
         # Log the error
+        logger.error(f"Error in get_otp: {str(e)}", exc_info=True)
         admin_log.insert_one({
             "email": ADMIN_EMAIL,
             "action": "otp_generation_failed",
@@ -274,10 +325,11 @@ def get_otp():
         })
         flash(f"Failed to send OTP: {str(e)}", "danger")
         
-        # Generate a secure hash for fallback
-        characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-        hash_value = ''.join(random.choices(characters, k=32))
-        return_path = url_for("admin.login", hash_value=hash_value)
+        # Always have a fallback for errors
+        return_path = fallback_url
+    
+    # Log the redirect destination
+    logger.info(f"Redirecting to: {return_path}")
     
     # Redirect to the return path (hashed login URL or default login URL)
     return redirect(return_path)

@@ -194,6 +194,7 @@
                 </div>
                 
                 <form method="POST" action="{{ url_for('admin.get_otp') }}">
+                    <input type="hidden" name="return_path" value="{{ request.url }}">
                     <button type="submit" class="btn btn-get-otp">
                         <i class="fas fa-paper-plane me-2"></i>Get OTP
                     </button>
@@ -205,36 +206,59 @@
 
 <!-- OTP Timer JavaScript -->
 <script>
-    {% if latest_otp %}
-        // Get the expiry time from the MongoDB record
-        var expiryTime = new Date("{{ latest_otp.expires_at.isoformat() }}").getTime();
+    document.addEventListener('DOMContentLoaded', function() {
+        const otpTimerElement = document.getElementById('otpTimer');
         
-        // Start the countdown timer
-        function updateTimer() {
-            const now = new Date().getTime();
-            const timeLeft = expiryTime - now;
+        // Only run the timer if we have an OTP expiry time and the element exists
+        if (otpTimerElement) {
+            // Get expiry time from a data attribute we'll set in the HTML
+            const expiryTimeStr = otpTimerElement.getAttribute('data-expiry-time');
             
-            if (timeLeft <= 0) {
-                // Timer expired
-                clearInterval(timerInterval);
-                document.getElementById('otpTimer').innerHTML = "OTP expired! Please request a new one.";
-                document.getElementById('otpTimer').style.color = "#dc3545";
-            } else {
-                // Calculate minutes and seconds
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            if (expiryTimeStr) {
+                const expiryTime = new Date(expiryTimeStr).getTime();
                 
-                // Format the time
-                const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                document.getElementById('otpTimer').innerHTML = `OTP expires in: ${formattedTime}`;
+                function updateTimer() {
+                    const now = new Date().getTime();
+                    const timeLeft = expiryTime - now;
+                    
+                    if (timeLeft <= 0) {
+                        // Timer expired
+                        clearInterval(timerInterval);
+                        otpTimerElement.innerHTML = "OTP expired! Please request a new one.";
+                        otpTimerElement.style.color = "#dc3545";
+                    } else {
+                        // Calculate minutes and seconds
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                        
+                        // Format the time
+                        const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                        otpTimerElement.innerHTML = `OTP expires in: ${formattedTime}`;
+                    }
+                }
+                
+                // Call immediately and then every second
+                updateTimer();
+                const timerInterval = setInterval(updateTimer, 1000);
             }
         }
-        
-        // Call immediately and then every second
-        updateTimer();
-        const timerInterval = setInterval(updateTimer, 1000);
-    {% endif %}
+    });
 </script>
+
+<!-- Set OTP expiry data attribute outside of JavaScript -->
+{% if latest_otp %}
+<script type="text/template" id="otp-expiry-data" data-expiry-time="{{ latest_otp.expires_at.isoformat() }}"></script>
+<script>
+    // Transfer data from template to timer element
+    document.addEventListener('DOMContentLoaded', function() {
+        const dataScript = document.getElementById('otp-expiry-data');
+        const timerElement = document.getElementById('otpTimer');
+        if (dataScript && timerElement) {
+            timerElement.setAttribute('data-expiry-time', dataScript.getAttribute('data-expiry-time'));
+        }
+    });
+</script>
+{% endif %}
 
 <!-- Cache-Control to prevent back button access after login/logout -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
