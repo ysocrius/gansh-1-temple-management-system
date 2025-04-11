@@ -340,7 +340,7 @@ def login():
     # Return a 404 error for security
     return abort(404)
 
-# Add a secret login path
+# Add a secret login path that redirects to admin login
 @admin_bp.route("/secret_login", methods=["GET"])
 def secret_login():
     """Secret path to admin login that redirects to token-based login URL"""
