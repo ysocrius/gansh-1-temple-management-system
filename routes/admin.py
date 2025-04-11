@@ -212,8 +212,13 @@ def login(hash_value=None):
 def get_otp():
     """Generate and send OTP to admin email"""
     try:
-        # Capture the return path if provided
-        return_path = request.form.get("return_path", url_for("admin.login"))
+        # Capture the return path if provided or generate a secure hash
+        return_path = request.form.get("return_path")
+        if not return_path or not "hashed=" in return_path:
+            # Generate a secure hash for fallback
+            characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+            hash_value = ''.join(random.choices(characters, k=32))
+            return_path = url_for("admin.login", hash_value=hash_value)
         
         # Invalidate any existing OTPs
         admin_log.update_many(

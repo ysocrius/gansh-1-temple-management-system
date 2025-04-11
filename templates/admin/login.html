@@ -181,7 +181,7 @@
                 
                 <div class="text-center mt-3">
                     <form method="POST" action="{{ url_for('admin.get_otp') }}">
-                        <input type="hidden" name="return_path" value="{{ request.path }}">
+                        <input type="hidden" name="return_path" value="{{ request.url }}">
                         <button type="submit" class="btn btn-link">Request New OTP</button>
                     </form>
                 </div>
