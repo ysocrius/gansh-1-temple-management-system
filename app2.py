@@ -56,6 +56,8 @@ def verify_maintenance_mode():
     import time
     import json
     import os
+    import datetime
+    from database import maintenance_log
     
     while True:
         try:
@@ -74,6 +76,53 @@ def verify_maintenance_mode():
                     if file_mode != app_mode:
                         logger.warning(f"Maintenance mode mismatch detected in background thread: app={app_mode}, file={file_mode}")
                         logger.warning("Restoring maintenance mode from file")
+                        
+                        # Record the timestamp for logging
+                        unix_timestamp = int(time.time())
+                        
+                        # Check direction of the change (auto-enable or auto-disable)
+                        action = "auto_enabled" if file_mode else "auto_disabled"
+                        opposite_action = "disabled" if file_mode else "enabled"
+                        
+                        # Find the last maintenance action to calculate duration
+                        try:
+                            last_action = maintenance_log.find_one(
+                                {"action": opposite_action},
+                                sort=[("timestamp_unix", -1)]
+                            )
+                            
+                            duration = None
+                            if last_action and "timestamp_unix" in last_action:
+                                # Calculate how long the site was in previous state (seconds)
+                                duration = unix_timestamp - last_action["timestamp_unix"]
+                            
+                            # Format duration for display
+                            from routes.admin import format_duration
+                            formatted_duration = format_duration(duration) if duration else None
+                            
+                            # Log the automatic change to maintenance_log collection
+                            duration_field = "uptime_duration" if action == "auto_enabled" else "downtime_duration"
+                            formatted_field = "uptime_formatted" if action == "auto_enabled" else "downtime_formatted"
+                            
+                            log_entry = {
+                                "action": action,
+                                "timestamp_unix": unix_timestamp,
+                                "timestamp": datetime.datetime.fromtimestamp(unix_timestamp),
+                                "admin_email": "system",  # Indicate this was automatic
+                                "ip_address": "127.0.0.1",
+                                "user_agent": "maintenance_monitor",
+                                "source": "background_verification",
+                                duration_field: duration,
+                                formatted_field: formatted_duration
+                            }
+                            
+                            maintenance_log.insert_one(log_entry)
+                            logger.info(f"Automatic maintenance mode change logged: {action}")
+                            logger.info(f"Log entry: {log_entry}")
+                        except Exception as e:
+                            logger.error(f"Error logging automatic maintenance change: {str(e)}")
+                        
+                        # Restore the maintenance mode from file
                         app.config["MAINTENANCE_MODE"] = file_mode
                         logger.info(f"Maintenance mode restored to: {app.config['MAINTENANCE_MODE']}")
                     else:

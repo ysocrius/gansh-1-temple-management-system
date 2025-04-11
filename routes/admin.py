@@ -744,24 +744,44 @@ def maintenance_logs():
             "total_logs": len(logs),
             "total_enabled": sum(1 for log in logs if log.get("action") == "enabled"),
             "total_disabled": sum(1 for log in logs if log.get("action") == "disabled"),
-            "total_downtime": sum(log.get("downtime_duration", 0) or 0 for log in logs if log.get("action") == "disabled"),
-            "total_uptime": sum(log.get("uptime_duration", 0) or 0 for log in logs if log.get("action") == "enabled"),
+            "total_auto_enabled": sum(1 for log in logs if log.get("action") == "auto_enabled"),
+            "total_auto_disabled": sum(1 for log in logs if log.get("action") == "auto_disabled"),
+            "total_downtime": sum(log.get("downtime_duration", 0) or 0 for log in logs if log.get("action") in ["disabled", "auto_disabled"]),
+            "total_uptime": sum(log.get("uptime_duration", 0) or 0 for log in logs if log.get("action") in ["enabled", "auto_enabled"]),
             "avg_downtime": 0,
             "avg_uptime": 0
         }
         
-        # Calculate averages
-        if stats["total_disabled"] > 0:
-            stats["avg_downtime"] = stats["total_downtime"] / stats["total_disabled"]
+        # Calculate totals including automatic actions
+        stats["total_all_enabled"] = stats["total_enabled"] + stats["total_auto_enabled"]
+        stats["total_all_disabled"] = stats["total_disabled"] + stats["total_auto_disabled"]
         
-        if stats["total_enabled"] > 0:
-            stats["avg_uptime"] = stats["total_uptime"] / stats["total_enabled"]
+        # Calculate averages
+        total_disable_events = stats["total_disabled"] + stats["total_auto_disabled"]
+        if total_disable_events > 0:
+            stats["avg_downtime"] = stats["total_downtime"] / total_disable_events
+        
+        total_enable_events = stats["total_enabled"] + stats["total_auto_enabled"]
+        if total_enable_events > 0:
+            stats["avg_uptime"] = stats["total_uptime"] / total_enable_events
         
         # Format durations for display
         stats["total_downtime_formatted"] = format_duration(stats["total_downtime"])
         stats["total_uptime_formatted"] = format_duration(stats["total_uptime"])
         stats["avg_downtime_formatted"] = format_duration(stats["avg_downtime"])
         stats["avg_uptime_formatted"] = format_duration(stats["avg_uptime"])
+        
+        # Count total automatic events
+        stats["total_auto_events"] = stats["total_auto_enabled"] + stats["total_auto_disabled"]
+        stats["total_manual_events"] = stats["total_enabled"] + stats["total_disabled"]
+        
+        # Add percentages
+        if stats["total_logs"] > 0:
+            stats["auto_percentage"] = round((stats["total_auto_events"] / stats["total_logs"]) * 100)
+            stats["manual_percentage"] = round((stats["total_manual_events"] / stats["total_logs"]) * 100)
+        else:
+            stats["auto_percentage"] = 0
+            stats["manual_percentage"] = 0
         
         return render_template(
             "admin/maintenance_logs.html",

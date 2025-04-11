@@ -14,6 +14,13 @@
     {% endif %}
 {% endwith %}
 
+<!-- Info Alert for Automatic Actions -->
+<div class="alert-info" style="margin-bottom: 20px; padding: 15px; border-radius: 5px; background-color: #d1ecf1; border-left: 5px solid #0c5460; color: #0c5460;">
+    <i class="fas fa-info-circle"></i> 
+    <strong>About Automatic Actions:</strong> The system will automatically restore maintenance mode if it detects unexpected changes. 
+    "Auto Enabled" and "Auto Disabled" entries indicate the system corrected the maintenance mode state.
+</div>
+
 <!-- Maintenance Statistics -->
 <div class="stats-cards">
     <div class="stats-card">
@@ -23,7 +30,14 @@
         <div class="stats-info">
             <h3>Total Events</h3>
             <p class="stats-value">{{ stats.total_logs }}</p>
-            <p class="stats-detail">{{ stats.total_enabled }} Enabled / {{ stats.total_disabled }} Disabled</p>
+            <p class="stats-detail">
+                <span title="Manual actions">{{ stats.total_manual_events }} Manual ({{ stats.manual_percentage }}%)</span> / 
+                <span title="Automatic system corrections">{{ stats.total_auto_events }} Auto ({{ stats.auto_percentage }}%)</span>
+            </p>
+            <p class="stats-detail">
+                <span class="enable-dot"></span> {{ stats.total_all_enabled }} Enabled 
+                <span class="disable-dot"></span> {{ stats.total_all_disabled }} Disabled
+            </p>
         </div>
     </div>
     
@@ -73,11 +87,20 @@
             <tbody>
                 {% if logs %}
                     {% for log in logs %}
-                        <tr class="{{ 'enabled-row' if log.action == 'enabled' else 'disabled-row' }}">
+                        <tr class="{{ 'enabled-row' if log.action == 'enabled' or log.action == 'auto_enabled' else 'disabled-row' }} {{ 'auto-action' if log.action.startswith('auto_') }}">
                             <td>
                                 <span class="status-badge {{ log.action }}">
-                                    <i class="fas {{ 'fa-tools' if log.action == 'enabled' else 'fa-check-circle' }}"></i>
-                                    {{ log.action|capitalize }}
+                                    {% if log.action == 'enabled' %}
+                                        <i class="fas fa-tools"></i> Enabled
+                                    {% elif log.action == 'disabled' %}
+                                        <i class="fas fa-check-circle"></i> Disabled
+                                    {% elif log.action == 'auto_enabled' %}
+                                        <i class="fas fa-robot"></i> Auto Enabled
+                                    {% elif log.action == 'auto_disabled' %}
+                                        <i class="fas fa-robot"></i> Auto Disabled
+                                    {% else %}
+                                        <i class="fas fa-question-circle"></i> {{ log.action|capitalize }}
+                                    {% endif %}
                                 </span>
                             </td>
                             <td>
@@ -88,7 +111,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if log.action == 'enabled' %}
+                                {% if log.action == 'enabled' or log.action == 'auto_enabled' %}
                                     <span title="How long the site was up before this maintenance">
                                         {{ log.uptime_formatted or 'N/A' }}
                                     </span>
@@ -98,7 +121,15 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            <td>{{ log.admin_email }}</td>
+                            <td>
+                                {% if log.admin_email == 'system' %}
+                                    <span class="system-user">
+                                        <i class="fas fa-robot"></i> System
+                                    </span>
+                                {% else %}
+                                    {{ log.admin_email }}
+                                {% endif %}
+                            </td>
                             <td>{{ log.ip_address }}</td>
                         </tr>
                     {% endfor %}
@@ -247,6 +278,32 @@
         background-color: rgba(40, 167, 69, 0.05);
     }
     
+    .enable-dot, .disable-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+    
+    .enable-dot {
+        background-color: #dc3545;
+    }
+    
+    .disable-dot {
+        background-color: #28a745;
+    }
+    
+    .auto-action {
+        background-image: repeating-linear-gradient(
+            45deg,
+            rgba(0,0,0,0.03),
+            rgba(0,0,0,0.03) 10px,
+            rgba(0,0,0,0.06) 10px,
+            rgba(0,0,0,0.06) 20px
+        );
+    }
+    
     .status-badge {
         display: inline-block;
         padding: 5px 10px;
@@ -265,8 +322,27 @@
         color: #28a745;
     }
     
+    .status-badge.auto_enabled {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 1px dashed #dc3545;
+    }
+    
+    .status-badge.auto_disabled {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+        border: 1px dashed #28a745;
+    }
+    
     .status-badge i {
         margin-right: 5px;
+    }
+    
+    .system-user {
+        color: #6c757d;
+        font-style: italic;
+        display: flex;
+        align-items: center;
     }
     
     /* Responsive Adjustments */
