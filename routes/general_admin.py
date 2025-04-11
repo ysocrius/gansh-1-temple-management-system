@@ -9,7 +9,6 @@ import logging
 from utils.db import get_db
 from bson.json_util import dumps
 from utils.decorators import admin_required
-import random
 
 # Import donation goals collection
 try:
@@ -18,38 +17,7 @@ except ImportError:
     from database import db
     donation_goals_collection = db.donation_goals
 
-# Configure logger
-logger = logging.getLogger(__name__)
-
-# Create blueprint
 general_admin_bp = Blueprint("general_admin", __name__, url_prefix="/admin/general")  # ✅ Fixed URL prefix
-
-# Helper function to generate secure hash for admin login
-def generate_secure_admin_login_url():
-    """Generate a secure hash and return the URL for admin login with hash"""
-    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    hash_value = ''.join(random.choices(characters, k=32))
-    return url_for("admin.login", hash_value=hash_value)
-
-# Authentication middleware for admin routes
-@general_admin_bp.before_request
-def require_admin():
-    # Skip auth check for specific endpoints
-    skip_endpoints = []
-    if request.endpoint in skip_endpoints:
-        return
-        
-    # Check if user is logged in and is an admin
-    if "admin" not in session:
-        flash("Admin access required", "danger")
-        response = redirect(generate_secure_admin_login_url())  # Ensure only admins access this page
-        
-        # Add cache control headers
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache" 
-        response.headers["Expires"] = "0"
-        
-        return response
 
 @general_admin_bp.after_request
 def add_cache_headers(response):

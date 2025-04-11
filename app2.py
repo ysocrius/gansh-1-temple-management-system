@@ -255,11 +255,6 @@ def check_maintenance_mode():
         logger.debug(f'Maintenance mode bypass for IP: {client_ip}')
         return None
         
-    # Always allow access to the secure admin login path
-    if request.path == '/admin/sec_login':
-        logger.debug(f'Maintenance mode bypass for secure admin login path')
-        return None
-        
     # Check if the path should bypass maintenance mode
     bypass_paths = app.config.get('MAINTENANCE_BYPASS_PATHS', [])
     for path in bypass_paths:

@@ -166,8 +166,7 @@
                     <i class="fas fa-info-circle me-2"></i>Please enter the 6-digit OTP sent to the admin email.
                 </div>
                 
-                <form method="POST" action="{{ request.path }}">
-                    <input type="hidden" name="current_url" value="{{ request.url }}">
+                <form method="POST" action="{{ url_for('admin.login_with_token', token=token) }}">
                     <div class="mb-3 otp-container">
                         <label for="otp" class="form-label">One-Time Password (OTP)</label>
                         <input type="text" class="form-control otp-input" id="otp" name="otp" required maxlength="6" placeholder="• • • • • •" autofocus>
@@ -182,7 +181,7 @@
                 
                 <div class="text-center mt-3">
                     <form method="POST" action="{{ url_for('admin.get_otp') }}">
-                        <input type="hidden" name="return_path" value="{{ request.url }}">
+                        <input type="hidden" name="token" value="{{ token }}">
                         <button type="submit" class="btn btn-link">Request New OTP</button>
                     </form>
                 </div>
@@ -195,6 +194,9 @@
                 </div>
                 
                 <form method="POST" action="{{ url_for('admin.get_otp') }}">
+                    {% if token %}
+                    <input type="hidden" name="token" value="{{ token }}">
+                    {% endif %}
                     <button type="submit" class="btn btn-get-otp">
                         <i class="fas fa-paper-plane me-2"></i>Get OTP
                     </button>
@@ -204,23 +206,11 @@
     </div>
 </div>
 
-<!-- Pass template data to JavaScript via data attributes -->
-<div id="otpData" 
-     data-has-otp="{% if latest_otp %}true{% else %}false{% endif %}" 
-     {% if latest_otp %}data-expiry-time="{{ latest_otp.expires_at.isoformat() }}"{% endif %}>
-</div>
-
 <!-- OTP Timer JavaScript -->
 <script>
-    // Get data from the DOM instead of mixing it in the JavaScript
-    var otpDataElement = document.getElementById('otpData');
-    var hasOtp = otpDataElement.getAttribute('data-has-otp') === 'true';
-    var expiryIsoTime = otpDataElement.getAttribute('data-expiry-time');
-    
-    // Only run the timer logic if we have OTP data
-    if (hasOtp && expiryIsoTime) {
+    {% if latest_otp %}
         // Get the expiry time from the MongoDB record
-        var expiryTime = new Date(expiryIsoTime).getTime();
+        var expiryTime = new Date("{{ latest_otp.expires_at.isoformat() }}").getTime();
         
         // Start the countdown timer
         function updateTimer() {
@@ -246,7 +236,7 @@
         // Call immediately and then every second
         updateTimer();
         const timerInterval = setInterval(updateTimer, 1000);
-    }
+    {% endif %}
 </script>
 
 <!-- Cache-Control to prevent back button access after login/logout -->

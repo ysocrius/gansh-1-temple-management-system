@@ -10,6 +10,9 @@ import time
 import logging
 from flask_mail import Message
 from utils.mail import mail
+import secrets
+import hashlib
+from werkzeug.security import safe_str_cmp
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -22,6 +25,141 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 # Admin email configuration - Update this with your actual admin email
 ADMIN_EMAIL = "yeshwanthcr108@gmail.com"
+
+# Create a dictionary to store valid login tokens and their expiration times
+login_tokens = {}
+
+# Track invalid token attempts to prevent brute force attacks
+invalid_token_attempts = {}
+INVALID_TOKEN_THRESHOLD = 5  # Maximum invalid attempts before temporary ban
+INVALID_TOKEN_BAN_DURATION = 15  # Ban duration in minutes
+
+def generate_secure_token():
+    """Generate a secure random 64-bit token for admin login URL"""
+    # Generate a random token using secrets module (cryptographically secure)
+    token = secrets.token_hex(32)  # 32 bytes = 64 hex chars
+    
+    # Store token with expiration time (20 minutes from now)
+    expiration = datetime.datetime.now() + datetime.timedelta(minutes=20)
+    login_tokens[token] = expiration
+    
+    # Clean up expired tokens
+    cleanup_expired_tokens()
+    
+    logger.info(f"Generated new admin login token (expires in 20 minutes)")
+    return token
+
+def is_ip_banned(ip_address):
+    """Check if an IP address is temporarily banned due to too many invalid token attempts"""
+    if ip_address in invalid_token_attempts:
+        attempts = invalid_token_attempts[ip_address]["attempts"]
+        last_attempt = invalid_token_attempts[ip_address]["timestamp"]
+        ban_expiry = last_attempt + datetime.timedelta(minutes=INVALID_TOKEN_BAN_DURATION)
+        
+        # Check if ban has expired
+        if datetime.datetime.now() > ban_expiry:
+            # Reset attempts after ban period
+            invalid_token_attempts[ip_address]["attempts"] = 0
+            return False
+        
+        # If attempts exceed threshold, IP is banned
+        if attempts >= INVALID_TOKEN_THRESHOLD:
+            return True
+    
+    return False
+
+def record_invalid_token_attempt(ip_address):
+    """Record an invalid token attempt and return whether the IP is now banned"""
+    current_time = datetime.datetime.now()
+    
+    if ip_address not in invalid_token_attempts:
+        invalid_token_attempts[ip_address] = {
+            "attempts": 1,
+            "timestamp": current_time
+        }
+    else:
+        # Check if we should reset counter due to time elapsed
+        last_attempt = invalid_token_attempts[ip_address]["timestamp"]
+        if current_time > last_attempt + datetime.timedelta(minutes=INVALID_TOKEN_BAN_DURATION):
+            # Reset after ban duration
+            invalid_token_attempts[ip_address] = {
+                "attempts": 1,
+                "timestamp": current_time
+            }
+        else:
+            # Increment attempts
+            invalid_token_attempts[ip_address]["attempts"] += 1
+            invalid_token_attempts[ip_address]["timestamp"] = current_time
+    
+    # Log attempt
+    attempts = invalid_token_attempts[ip_address]["attempts"]
+    logger.warning(f"Invalid token attempt from IP: {ip_address}, Attempts: {attempts}/{INVALID_TOKEN_THRESHOLD}")
+    
+    # Add to admin log
+    if attempts >= INVALID_TOKEN_THRESHOLD:
+        admin_log.insert_one({
+            "action": "ip_temporarily_banned",
+            "ip_address": ip_address,
+            "timestamp": current_time,
+            "reason": f"Exceeded invalid token attempts: {attempts}",
+            "ban_duration_minutes": INVALID_TOKEN_BAN_DURATION
+        })
+        logger.warning(f"IP temporarily banned due to invalid token attempts: {ip_address}")
+        return True
+    
+    return False
+
+def cleanup_expired_tokens():
+    """Remove expired tokens from the login_tokens dictionary"""
+    current_time = datetime.datetime.now()
+    
+    # Clean up expired login tokens
+    expired_tokens = [t for t, exp in login_tokens.items() if exp < current_time]
+    for t in expired_tokens:
+        login_tokens.pop(t, None)
+    
+    if expired_tokens:
+        logger.info(f"Cleaned up {len(expired_tokens)} expired login tokens")
+    
+    # Clean up expired invalid attempt records
+    expired_attempts = []
+    for ip, data in invalid_token_attempts.items():
+        last_attempt = data["timestamp"]
+        # If the last attempt was more than twice the ban duration ago, remove the record
+        if current_time > last_attempt + datetime.timedelta(minutes=INVALID_TOKEN_BAN_DURATION * 2):
+            expired_attempts.append(ip)
+    
+    # Remove expired attempt records
+    for ip in expired_attempts:
+        invalid_token_attempts.pop(ip, None)
+    
+    if expired_attempts:
+        logger.info(f"Cleaned up {len(expired_attempts)} expired IP ban records")
+    
+    # Log total active tokens and banned IPs for monitoring
+    logger.debug(f"Active login tokens: {len(login_tokens)}")
+    banned_ips = sum(1 for ip, data in invalid_token_attempts.items() 
+                     if data["attempts"] >= INVALID_TOKEN_THRESHOLD and 
+                     current_time <= data["timestamp"] + datetime.timedelta(minutes=INVALID_TOKEN_BAN_DURATION))
+    logger.debug(f"Currently banned IPs: {banned_ips}")
+
+# Start a background thread to periodically clean up expired tokens
+import threading
+def token_cleanup_thread():
+    """Background thread to periodically clean up expired tokens"""
+    import time
+    while True:
+        try:
+            # Sleep for 5 minutes between cleanups
+            time.sleep(300)
+            cleanup_expired_tokens()
+        except Exception as e:
+            logger.error(f"Error in token cleanup thread: {str(e)}")
+
+# Start the token cleanup thread when the app starts
+cleanup_thread = threading.Thread(target=token_cleanup_thread, daemon=True)
+cleanup_thread.start()
+logger.info("Started token cleanup background thread")
 
 # Helper function to format duration in seconds to human-readable format
 def format_duration(seconds):
@@ -47,39 +185,17 @@ def format_duration(seconds):
     
     return " ".join(parts)
 
-# Helper function to generate secure hash for admin login URL
-def generate_secure_hash(length=32):
-    """Generate a secure random hash for admin login URLs"""
-    import random
-    import string
-    import time
-    
-    # Use a mix of characters for security
-    characters = string.ascii_letters + string.digits
-    
-    # Start with timestamp for uniqueness
-    result = str(int(time.time()))
-    
-    # Fill the rest with random characters
-    for i in range(len(result), length):
-        result += random.choice(characters)
-        
-    return result
-
 # Authentication middleware for admin routes
 @admin_bp.before_request
 def require_admin():
-    # Skip auth check for login page, get-otp endpoints, and the secure login route
-    if request.endpoint in ["admin.login", "admin.get_otp", "admin.sec_login"]:
+    # Skip auth check for login page and get-otp endpoints
+    if request.endpoint in ["admin.login", "admin.login_with_token", "admin.login_redirect", "admin.get_otp"]:
         return
 
     # Check if user is logged in and is an admin
     if "admin" not in session:
         flash("Admin access required", "danger")
-        
-        # Generate a secure hash for the login URL
-        hash_value = generate_secure_hash()
-        response = redirect(url_for("admin.login", hash_value=hash_value))
+        response = redirect(url_for("admin.login_redirect"))
         
         # Add cache control headers
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -87,33 +203,6 @@ def require_admin():
         response.headers["Expires"] = "0"
         
         return response
-
-# Special route for admin login during maintenance mode
-@admin_bp.route("/sec_login")
-def sec_login():
-    """Secondary admin login route that works during maintenance mode"""
-    # Generate a secure hash for the admin login URL
-    hash_value = generate_secure_hash(64)
-    
-    # Encode the hash for URL
-    import urllib.parse
-    encoded_hash = urllib.parse.quote(hash_value)
-    
-    # Log this special access attempt
-    logger.info(f"Admin secure login accessed from {request.remote_addr}")
-    
-    # Add to admin audit log
-    admin_log.insert_one({
-        "email": "admin_system",
-        "action": "sec_login_accessed",
-        "timestamp": datetime.datetime.now(),
-        "ip_address": request.remote_addr,
-        "user_agent": request.user_agent.string,
-        "maintenance_active": True
-    })
-    
-    # Redirect to the hashed login URL
-    return redirect(url_for("admin.login", hash_value=encoded_hash))
 
 @admin_bp.after_request
 def add_cache_headers(response):
@@ -126,19 +215,43 @@ def add_cache_headers(response):
         response.headers["Expires"] = "0"
     return response
 
-@admin_bp.route("/login", methods=["GET", "POST"])
-@admin_bp.route("/login/hashed=<string:hash_value>", methods=["GET", "POST"])
-def login(hash_value=None):
-    """Admin Login Page with OTP Verification"""
-    # If accessed directly without hash, return 404
-    if hash_value is None and request.path == "/admin/login":
-        logger.info(f"Blocked direct access to admin login from IP: {request.remote_addr}, User-Agent: {request.user_agent}")
-        return render_template('errors/404.html'), 404
+@admin_bp.route("/login-redirect")
+def login_redirect():
+    """Generate a secure token and redirect to the tokenized login URL"""
+    # Check if IP is currently banned
+    client_ip = request.remote_addr
+    if is_ip_banned(client_ip):
+        flash("Too many invalid access attempts. Please try again later.", "danger")
+        return redirect(url_for("general.home"))
     
-    # Log the hash value for debugging
-    if hash_value:
-        logger.info(f"Admin login accessed with hash: {hash_value}")
+    token = generate_secure_token()
+    secure_url = url_for("admin.login_with_token", token=token)
+    return redirect(secure_url)
+
+@admin_bp.route("/login/<token>", methods=["GET", "POST"])
+def login_with_token(token):
+    """Admin Login Page with Token Verification and OTP Verification"""
+    # Check if IP is currently banned
+    client_ip = request.remote_addr
+    if is_ip_banned(client_ip):
+        flash("Too many invalid access attempts. Please try again later.", "danger")
+        return redirect(url_for("general.home"))
     
+    # Verify token is valid and not expired
+    current_time = datetime.datetime.now()
+    if token not in login_tokens or login_tokens[token] < current_time:
+        # Invalid or expired token
+        logger.warning(f"Invalid or expired admin login token attempted: {token[:10]}...")
+        flash("Invalid or expired login link. Please use the Admin Login button to access the login page.", "danger")
+        
+        # Record invalid attempt
+        is_banned = record_invalid_token_attempt(client_ip)
+        if is_banned:
+            flash(f"Too many invalid attempts. Access temporarily restricted for {INVALID_TOKEN_BAN_DURATION} minutes.", "danger")
+        
+        return redirect(url_for("general.home"))
+    
+    # Token is valid, proceed with normal login logic
     if request.method == "POST":
         entered_otp = request.form.get("otp")
         
@@ -172,9 +285,11 @@ def login(hash_value=None):
                 "action": "login_success",
                 "timestamp": datetime.datetime.now(),
                 "ip_address": request.remote_addr,
-                "user_agent": request.user_agent.string,
-                "hash_value": hash_value
+                "user_agent": request.user_agent.string
             })
+            
+            # Remove used token
+            login_tokens.pop(token, None)
             
             flash("Login successful! Welcome to the admin panel.", "success")
             return redirect(url_for("general_admin.admin_dashboard"))
@@ -197,42 +312,60 @@ def login(hash_value=None):
                     "timestamp": datetime.datetime.now(),
                     "ip_address": request.remote_addr,
                     "user_agent": request.user_agent.string,
-                    "entered_otp": entered_otp,
-                    "hash_value": hash_value
+                    "entered_otp": entered_otp
                 })
                 flash("Invalid OTP. Please try again.", "danger")
 
     # Get the most recent active OTP for the timer display
-    try:
-        latest_otp = admin_log.find_one(
-            {
-                "email": ADMIN_EMAIL, 
-                "is_used": False,
-                "expires_at": {"$gt": datetime.datetime.now()}
-            },
-            sort=[("created_at", -1)]
-        )
-    except Exception as e:
-        logger.error(f"Error fetching latest OTP: {str(e)}")
-        latest_otp = None
+    latest_otp = admin_log.find_one(
+        {
+            "email": ADMIN_EMAIL, 
+            "is_used": False,
+            "expires_at": {"$gt": datetime.datetime.now()}
+        },
+        sort=[("created_at", -1)]
+    )
     
     # Prevent caching of login page
-    response = make_response(render_template("admin/login.html", latest_otp=latest_otp))
+    response = make_response(render_template("admin/login.html", latest_otp=latest_otp, token=token))
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
 
+# Keep the original login route for backward compatibility, but redirect to the token-based URL
+@admin_bp.route("/login", methods=["GET", "POST"])
+def login():
+    """Redirect to token-based login URL"""
+    # Generate a new token and redirect
+    token = generate_secure_token()
+    secure_url = url_for("admin.login_with_token", token=token)
+    return redirect(secure_url)
+
 @admin_bp.route("/get-otp", methods=["POST"])
 def get_otp():
     """Generate and send OTP to admin email"""
     try:
-        # Capture the return path if provided or generate a secure hash
-        return_path = request.form.get("return_path")
-        if not return_path or not "hashed=" in return_path:
-            # Generate a secure hash for fallback
-            hash_value = generate_secure_hash()
-            return_path = url_for("admin.login", hash_value=hash_value)
+        # Extract token from form data or referer URL to maintain context
+        token = request.form.get("token")
+        
+        # If no token in form, try to extract from referer
+        if not token:
+            referer = request.referrer
+            if referer and '/admin/login/' in referer:
+                try:
+                    token = referer.split('/admin/login/')[1]
+                except:
+                    token = None
+        
+        # Verify token is valid or generate new one
+        if token and token in login_tokens:
+            # Keep using the valid token
+            logger.info(f"Using existing token for OTP request")
+        else:
+            # Generate new token
+            token = generate_secure_token()
+            logger.info(f"Generated new token for OTP request")
         
         # Invalidate any existing OTPs
         admin_log.update_many(
@@ -257,8 +390,7 @@ def get_otp():
             "expires_at": expiration_time,
             "is_used": False,
             "request_ip": request.remote_addr,
-            "user_agent": request.user_agent.string,
-            "return_path": return_path
+            "user_agent": request.user_agent.string
         }
         admin_log.insert_one(otp_record)
         
@@ -272,7 +404,7 @@ def get_otp():
             "timestamp": datetime.datetime.now(),
             "ip_address": request.remote_addr,
             "user_agent": request.user_agent.string,
-            "return_path": return_path
+            "token": token[:8] + "..." if token else None  # Log partial token for debugging
         })
         
         flash("OTP sent to admin email. Please check your inbox.", "success")
@@ -287,13 +419,13 @@ def get_otp():
             "user_agent": request.user_agent.string
         })
         flash(f"Failed to send OTP: {str(e)}", "danger")
-        
-        # Generate a secure hash for fallback
-        hash_value = generate_secure_hash()
-        return_path = url_for("admin.login", hash_value=hash_value)
     
-    # Redirect to the return path (hashed login URL or default login URL)
-    return redirect(return_path)
+    # Redirect back to the token-based login page
+    if token:
+        return redirect(url_for("admin.login_with_token", token=token))
+    else:
+        # Fallback to regular login which will generate a new token
+        return redirect(url_for("admin.login"))
 
 def send_admin_otp(email, otp):
     """Send admin login OTP email"""
