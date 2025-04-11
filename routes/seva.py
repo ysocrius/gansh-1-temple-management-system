@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 from database import seva_list
 from bson.objectid import ObjectId  # Import ObjectId
+import random
 
 sevas_bp = Blueprint("sevas", __name__)
 
@@ -75,23 +76,61 @@ def add_seva():
 
 
 
-@sevas_bp.route("/admin/delete-seva/<_id>", methods=["POST"])
-def delete_seva(_id):
-    """Delete a seva from the database"""
-    if "admin" not in session:
-        return redirect(url_for("admin.login"))  # Ensure only admins can delete
-
+@sevas_bp.route("/admin/delete/<string:seva_id>", methods=['POST'])
+def admin_delete_seva(seva_id):
+    """Delete a seva (admin only)"""
+    # Check if user is logged in as admin
+    if 'admin' not in session:
+        flash('Admin access required', 'danger')
+        return redirect(generate_secure_admin_login_url())  # Ensure only admins can delete
+        
     try:
-        object_id = ObjectId(_id)  # Convert _id to ObjectId
-        result = seva_list.delete_one({"_id": object_id})  # Delete seva
+        # Convert ID string to ObjectId
+        seva_id_obj = ObjectId(seva_id)
+        
+        # First, find the seva to get its details for the confirmation message
+        seva = seva_list.find_one({'_id': seva_id_obj})
+        if not seva:
+            flash('Seva not found', 'danger')
+            return redirect(url_for('sevas.admin_list_sevas'))
+            
+        # Delete the seva
+        result = seva_list.delete_one({'_id': seva_id_obj})
         
         if result.deleted_count > 0:
-            flash("Seva successfully deleted.", "success")
+            flash(f'Seva "{seva.get("name", "Unknown")}" deleted successfully', 'success')
         else:
-            flash("Seva not found or already deleted.", "warning")
+            flash('Failed to delete seva', 'danger')
             
     except Exception as e:
-        flash(f"Error deleting seva: {str(e)}", "danger")
-        print(f"Error deleting seva: {e}")  # Print error details
+        flash(f'Error deleting seva: {str(e)}', 'danger')
+        
+    return redirect(url_for('sevas.admin_list_sevas'))
 
-    return redirect(url_for("general_admin.manage_sevas"))  # Redirect to the new admin route
+# Helper function to generate secure hash for admin login
+def generate_secure_admin_login_url():
+    """Generate a secure hash and return the URL for admin login with hash"""
+    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    hash_value = ''.join(random.choices(characters, k=32))
+    return url_for("admin.login", hash_value=hash_value)
+
+# Authentication middleware for admin routes
+@sevas_bp.before_request
+def require_admin():
+    """Ensure that only admins can access these routes"""
+    # Skip auth check for routes that don't need it
+    if not request.path.startswith('/seva/admin'):
+        return
+        
+    # Check if user is logged in as admin
+    if 'admin' not in session:
+        # Not an admin, redirect to admin login
+        flash('Admin access required', 'danger')
+        response = redirect(generate_secure_admin_login_url())
+        
+        # Add cache control headers
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        
+        return response

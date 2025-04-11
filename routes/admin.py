@@ -57,7 +57,11 @@ def require_admin():
     # Check if user is logged in and is an admin
     if "admin" not in session:
         flash("Admin access required", "danger")
-        response = redirect(url_for("admin.login"))
+        
+        # Generate a secure hash for the login URL
+        characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        hash_value = ''.join(random.choices(characters, k=32))
+        response = redirect(url_for("admin.login", hash_value=hash_value))
         
         # Add cache control headers
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -115,6 +119,11 @@ def add_cache_headers(response):
 @admin_bp.route("/login/hashed=<string:hash_value>", methods=["GET", "POST"])
 def login(hash_value=None):
     """Admin Login Page with OTP Verification"""
+    # If accessed directly without hash, return 404
+    if hash_value is None and request.path == "/admin/login":
+        logger.info(f"Blocked direct access to admin login from IP: {request.remote_addr}, User-Agent: {request.user_agent}")
+        return render_template('errors/404.html'), 404
+    
     # Log the hash value for debugging
     if hash_value:
         logger.info(f"Admin login accessed with hash: {hash_value}")
@@ -259,7 +268,11 @@ def get_otp():
             "user_agent": request.user_agent.string
         })
         flash(f"Failed to send OTP: {str(e)}", "danger")
-        return_path = url_for("admin.login")
+        
+        # Generate a secure hash for fallback
+        characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        hash_value = ''.join(random.choices(characters, k=32))
+        return_path = url_for("admin.login", hash_value=hash_value)
     
     # Redirect to the return path (hashed login URL or default login URL)
     return redirect(return_path)

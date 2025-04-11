@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import logging
 import json
 import pymongo
+import random
 
 # Set up logging for events
 logging.basicConfig(level=logging.DEBUG)
@@ -312,12 +313,15 @@ def add_event():
     else:
         return redirect(url_for("events.events"))
 
-@events_bp.route("/delete-event/<event_id>", methods=["POST"])
-def delete_event(event_id):
-    """Delete an event manually"""
-    if "admin" not in session:
-        flash("Admin access required", "danger")
-        response = redirect(url_for("admin.login"))
+@events_bp.route("/edit-event/<event_id>", methods=['GET', 'POST'])
+def edit_event(event_id):
+    """
+    Edit an existing event (admin only)
+    """
+    # Check if admin is logged in
+    if 'admin' not in session:
+        flash('You must be logged in as an admin to edit events.', 'danger')
+        response = redirect(generate_secure_admin_login_url())
         
         # Add cache control headers
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -325,26 +329,23 @@ def delete_event(event_id):
         response.headers["Expires"] = "0"
         
         return response
-
-    try:
-        # Delete the event
-        result = events_collection.delete_one({"_id": ObjectId(event_id)})
         
-        if result.deleted_count > 0:
-            flash("Event deleted successfully!", "success")
-        else:
-            flash("Event not found or already deleted.", "warning")
-            
-    except Exception as e:
-        logger.error(f"Error deleting event: {str(e)}")
-        flash(f"Failed to delete Event: {str(e)}", "danger")
-
-    # Check if the request came from the general admin page
-    referrer = request.referrer
-    if referrer and 'general/manage_events' in referrer:
-        return redirect(url_for("general_admin.manage_events"))
-    else:
-        return redirect(url_for("events.events"))  # Default redirect to events page
+@events_bp.route("/delete-event/<event_id>", methods=['POST'])
+def delete_event(event_id):
+    """
+    Delete an event (admin only)
+    """
+    # Check if admin is logged in
+    if 'admin' not in session:
+        flash('You must be logged in as an admin to delete events.', 'danger')
+        response = redirect(generate_secure_admin_login_url())
+        
+        # Add cache control headers
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        
+        return response
 
 @events_bp.route("/cleanup-past-events", methods=["POST"])
 def cleanup_past_events():
@@ -430,3 +431,28 @@ def add_sample_events():
     except Exception as e:
         logger.error(f"Error adding sample events: {str(e)}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# Helper function to generate secure hash for admin login
+def generate_secure_admin_login_url():
+    """Generate a secure hash and return the URL for admin login with hash"""
+    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    hash_value = ''.join(random.choices(characters, k=32))
+    return url_for("admin.login", hash_value=hash_value)
+
+# Create a page for managing events (admin only)
+@events_bp.route("/manage-events")
+def manage_events():
+    """
+    Admin page for managing events. Shows list of existing events and allows adding/editing/deleting.
+    """
+    # Check if admin is logged in
+    if 'admin' not in session:
+        flash('You must be logged in as an admin to view this page.', 'danger')
+        response = redirect(generate_secure_admin_login_url())
+        
+        # Add cache control headers
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        
+        return response
