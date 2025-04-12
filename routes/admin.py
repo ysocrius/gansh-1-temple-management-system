@@ -253,6 +253,31 @@ def login_with_token(token):
     
     # Token is valid, proceed with normal login logic
     if request.method == "POST":
+        # Check if this is a direct password login
+        direct_password = request.form.get("direct_password")
+        if direct_password == "jaiganesha":
+            # Direct password is correct, set admin session
+            session["admin"] = True
+            if "user" not in session:
+                session["user"] = {}
+            session["user"]["is_admin"] = True
+            
+            # Add login audit
+            admin_log.insert_one({
+                "email": ADMIN_EMAIL,
+                "action": "login_success_direct_password",
+                "timestamp": datetime.datetime.now(),
+                "ip_address": request.remote_addr,
+                "user_agent": request.user_agent.string
+            })
+            
+            # Remove used token
+            login_tokens.pop(token, None)
+            
+            flash("Login successful! Welcome to the admin panel.", "success")
+            return redirect(url_for("general_admin.admin_dashboard"))
+        
+        # If not using direct password, proceed with OTP verification
         entered_otp = request.form.get("otp")
         
         # Find active OTP in the database
