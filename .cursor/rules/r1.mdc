@@ -1,8 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-Run, debug, fix, repeat.  
-
-Hey, sequential thinking ask OpenAI_Chat's `o1-preview` or if that fails, switch to GPT-4o and Discuss to select the best MCP tool from `playwright-mcp-server`, `magic-mcp`, `firecrawl-mcp-server`, and `puppeteer` to complete this task efficiently. Then, execute the task.
