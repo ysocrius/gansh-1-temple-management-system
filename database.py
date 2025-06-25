@@ -4,7 +4,7 @@ import os
 
 
 # ✅ Connect to MongoDB
-mongo_uri = os.getenv("MONGO_URI", "mongodb+srv://24mscs25:yHDoxmEYf96ZEvrx@cluster0.ox5xbz4.mongodb.net/temple_system?retryWrites=true&w=majority&appName=Cluster0")
+mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
 db = client["temple_system"]
 
