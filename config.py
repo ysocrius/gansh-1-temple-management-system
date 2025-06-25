@@ -12,7 +12,7 @@ class Config:
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USERNAME = "yeshwanthcr108@gmail.com"
-    MAIL_PASSWORD = "vbqcptpnblofsvuj"
+    MAIL_PASSWORD = "vbqsdgdfgdfblofsvuj"
     MAIL_DEFAULT_SENDER = "yeshwanthcr108@gmail.com"
 
     # ✅ MongoDB Configuration
