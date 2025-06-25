@@ -1,8 +1,0 @@
-git init && git pull && git add . && git commit -m "Update: $(date '+%Y-%m-%d %H:%M')" && git push && git push -u origin main
-
-git init
-git remote add origin https://github.com/ysocrius/gansh-1-temple-management-system.git
-git add .
-git commit -m "Update: $(date '+%Y-%m-%d %H:%M')"
-git branch -M main
-git push -f -u origin main
