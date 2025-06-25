@@ -2,7 +2,7 @@ from pymongo import MongoClient
 import pprint
 
 # Connect to MongoDB
-client = MongoClient('mongodb+srv://24mscs25:yHDoxmEYf96ZEvrx@cluster0.ox5xbz4.mongodb.net/temple_system')
+#client = MongoClient('mongodb+srv://24mscs25:yHDoxmEYf96ZEvrx@cluster0.ox5xbz4.mongodb.net/temple_system')
 db = client['temple_system']
 
 # List all collections
